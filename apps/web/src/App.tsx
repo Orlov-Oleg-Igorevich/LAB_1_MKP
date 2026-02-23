@@ -23,7 +23,9 @@ import OrbitVisualizer from './OrbitVisualizer';
 
 type Preset = { id: number; orbit: OrbitalElements };
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3000/api';
+const API_BASE =
+  import.meta.env.VITE_API_BASE ??
+  `${window.location.protocol}//${window.location.hostname}:3000/api`;
 
 export default function App() {
   const [presets, setPresets] = useState<Preset[]>([]);
