@@ -22,6 +22,7 @@ ENV NODE_ENV=production
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=deps /app/node_modules ./node_modules
+RUN npx puppeteer browsers install chrome
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
 
