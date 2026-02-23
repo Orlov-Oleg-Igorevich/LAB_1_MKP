@@ -5,4 +5,3 @@ import { ConstantsController } from './constants.controller';
   controllers: [ConstantsController],
 })
 export class ConstantsModule {}
-

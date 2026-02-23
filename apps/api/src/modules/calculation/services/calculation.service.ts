@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { GEOPOTENTIAL_CONSTANTS, PHYSICS_CONSTANTS, deg2rad } from '@lab/shared';
+import {
+  GEOPOTENTIAL_CONSTANTS,
+  PHYSICS_CONSTANTS,
+  deg2rad,
+} from '@lab/shared';
 import { CalculationRequestDto } from '../dto/calculation.dto';
 import { KeplerService } from './kepler.service';
 import { CoordinatesService } from './coordinates.service';
@@ -60,7 +64,8 @@ export class CalculationService {
       const lambda = spherical.lambda;
 
       const cosPhi = Math.cos(phi);
-      const safeCosPhi = Math.abs(cosPhi) < 1e-12 ? (cosPhi >= 0 ? 1e-12 : -1e-12) : cosPhi;
+      const safeCosPhi =
+        Math.abs(cosPhi) < 1e-12 ? (cosPhi >= 0 ? 1e-12 : -1e-12) : cosPhi;
 
       // Azimuth formulas (handout, after (5))
       const sinA = Math.cos(iRad) / safeCosPhi;
@@ -82,7 +87,9 @@ export class CalculationService {
       const W = jphi_m * sinA - jlambda_m * cosA;
       const total = Math.hypot(S, T, W);
 
-      let accelerationJ2Only: { S: number; T: number; W: number; total: number } | undefined;
+      let accelerationJ2Only:
+        | { S: number; T: number; W: number; total: number }
+        | undefined;
       if (includeJ2Only) {
         const j2 = this.geopotential.accelerationSphericalKm({
           rKm: spherical.r,
@@ -96,10 +103,16 @@ export class CalculationService {
         const S2 = jr2;
         const T2 = jphi2 * cosA + jlambda2 * sinA;
         const W2 = jphi2 * sinA - jlambda2 * cosA;
-        accelerationJ2Only = { S: S2, T: T2, W: W2, total: Math.hypot(S2, T2, W2) };
+        accelerationJ2Only = {
+          S: S2,
+          T: T2,
+          W: W2,
+          total: Math.hypot(S2, T2, W2),
+        };
       }
 
-      const newtonAcceleration = (PHYSICS_CONSTANTS.mu / (spherical.r * spherical.r)) * 1000;
+      const newtonAcceleration =
+        (PHYSICS_CONSTANTS.mu / (spherical.r * spherical.r)) * 1000;
 
       return {
         index: idx,
@@ -123,9 +136,16 @@ export class CalculationService {
     const minAcceleration = Math.min(...totals);
     const maxAcceleration = Math.max(...totals);
     const avgAcceleration = totals.reduce((a, b) => a + b, 0) / totals.length;
-    const period = 2 * Math.PI * Math.sqrt(Math.pow(orbit.a, 3) / PHYSICS_CONSTANTS.mu);
+    const period =
+      2 * Math.PI * Math.sqrt(Math.pow(orbit.a, 3) / PHYSICS_CONSTANTS.mu);
 
-    const harmonics: { n: number; k: number; Jn?: number; Cnk?: number; Snk?: number }[] = [];
+    const harmonics: {
+      n: number;
+      k: number;
+      Jn?: number;
+      Cnk?: number;
+      Snk?: number;
+    }[] = [];
     for (let n = 2; n <= Math.min(maxHarmonicN, 21); n++) {
       const Jn = (GEOPOTENTIAL_CONSTANTS.J as Record<number, number>)[n];
       if (Jn !== undefined) harmonics.push({ n, k: 0, Jn });
@@ -133,7 +153,8 @@ export class CalculationService {
         const key = `${n},${k}` as const;
         const Cnk = (GEOPOTENTIAL_CONSTANTS.C as Record<string, number>)[key];
         const Snk = (GEOPOTENTIAL_CONSTANTS.S as Record<string, number>)[key];
-        if (Cnk !== undefined || Snk !== undefined) harmonics.push({ n, k, Cnk, Snk });
+        if (Cnk !== undefined || Snk !== undefined)
+          harmonics.push({ n, k, Cnk, Snk });
       }
     }
 
@@ -154,4 +175,3 @@ export class CalculationService {
     };
   }
 }
-

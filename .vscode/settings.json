@@ -1,0 +1,57 @@
+{
+  // === Личные настройки ===
+  "console-ninja.captureFunctions": true,
+  "console-ninja.featureSet": "Community",
+  "editor.insertSpaces": true,
+  "editor.mouseWheelZoom": true,
+  "liveServer.settings.donotShowInfoMsg": true,
+  "explorer.confirmDelete": false,
+  "editor.minimap.enabled": false,
+  "explorer.confirmDragAndDrop": false,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "workbench.editorAssociations": {
+    "*.html": "default"
+  },
+  "files.exclude": {
+    "**/.git": false
+  },
+  "window.zoomLevel": 2,
+  "terminal.integrated.env.windows": {},
+
+  // === ESLint: основные настройки (оптимизировано для ESLint 9) ===
+  "eslint.debug": false, // можно включить true при отладке
+  "eslint.run": "onSave",
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.format.enable": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+
+  // === Форматирование: ВСЁ через ESLint ===
+  "editor.formatOnSave": false,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  // НЕ указываем defaultFormatter — пусть ESLint управляет всем
+
+  // === Prettier: отключаем как отдельный инструмент ===
+  // (если используете prettier через eslint-plugin-prettier — этого достаточно)
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
+}

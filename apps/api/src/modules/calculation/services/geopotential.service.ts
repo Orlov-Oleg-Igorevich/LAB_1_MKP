@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GEOPOTENTIAL_CONSTANTS, HarmonicKey, PHYSICS_CONSTANTS } from '@lab/shared';
+import { GEOPOTENTIAL_CONSTANTS, PHYSICS_CONSTANTS } from '@lab/shared';
 import { LegendreService } from './legendre.service';
 
 export interface HarmonicOptions {
@@ -23,7 +23,12 @@ export class GeopotentialService {
     phiRad: number;
     lambdaRad: number;
     options: HarmonicOptions;
-  }): { jr: number; jphi: number; jlambda: number; usedHarmonics: { n: number; k: number }[] } {
+  }): {
+    jr: number;
+    jphi: number;
+    jlambda: number;
+    usedHarmonics: { n: number; k: number }[];
+  } {
     const { rKm, phiRad, lambdaRad, options } = params;
     const q = Math.sin(phiRad); // q = sin(phi)
     const cphi = Math.cos(phiRad);
@@ -60,9 +65,11 @@ export class GeopotentialService {
       if (options.j2Only) continue;
 
       for (let k = 1; k <= Math.min(maxK, n); k++) {
-        const key = `${n},${k}` as HarmonicKey;
-        const Cnk = (GEOPOTENTIAL_CONSTANTS.C as Record<HarmonicKey, number>)[key] ?? 0;
-        const Snk = (GEOPOTENTIAL_CONSTANTS.S as Record<HarmonicKey, number>)[key] ?? 0;
+        const key = `${n},${k}`;
+        const Cnk =
+          (GEOPOTENTIAL_CONSTANTS.C as Record<string, number>)[key] ?? 0;
+        const Snk =
+          (GEOPOTENTIAL_CONSTANTS.S as Record<string, number>)[key] ?? 0;
         if (Cnk === 0 && Snk === 0) continue;
 
         const cosk = Math.cos(k * lambdaRad);
@@ -77,7 +84,7 @@ export class GeopotentialService {
         jphi -= rn * dPnk_dq * A;
         // The handout formula (11) for j_lambda is written without an explicit k multiplier.
         // We follow the handout text.
-        jlambda += rn * Pnk * B;
+        jlambda += k * rn * Pnk * B;
         usedHarmonics.push({ n, k });
       }
     }
@@ -85,9 +92,10 @@ export class GeopotentialService {
     // Apply common multipliers (see formula (11))
     jr = base * jr;
     jphi = base * cphi * jphi;
-    jlambda = -base * (1 / Math.max(1e-12, cphi)) * jlambda;
+    const safeCphi =
+      Math.abs(cphi) < 1e-12 ? (cphi >= 0 ? 1e-12 : -1e-12) : cphi;
+    jlambda = -base * (1 / safeCphi) * jlambda;
 
     return { jr, jphi, jlambda, usedHarmonics };
   }
 }
-

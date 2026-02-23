@@ -15,9 +15,14 @@ export class CalculationController {
   }
 
   @Post('compare')
-  @ApiOkResponse({ description: 'Compare J2-only vs full model (same as calculate with includeJ2Only=true)' })
+  @ApiOkResponse({
+    description:
+      'Compare J2-only vs full model (same as calculate with includeJ2Only=true)',
+  })
   compare(@Body() body: CalculationRequestDto) {
-    return this.calculation.calculate({ ...body, options: { ...body.options, includeJ2Only: true } });
+    return this.calculation.calculate({
+      ...body,
+      options: { ...body.options, includeJ2Only: true },
+    });
   }
 }
-

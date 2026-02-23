@@ -55,7 +55,12 @@ export class CoordinatesService {
     return { r: rr, phi, lambda };
   }
 
-  elementsToRadians(el: { i: number; Omega: number; omega: number; M: number }) {
+  elementsToRadians(el: {
+    i: number;
+    Omega: number;
+    omega: number;
+    M: number;
+  }) {
     return {
       iRad: deg2rad(el.i),
       OmegaRad: deg2rad(el.Omega),
@@ -64,4 +69,3 @@ export class CoordinatesService {
     };
   }
 }
-

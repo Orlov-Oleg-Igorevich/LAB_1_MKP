@@ -18,4 +18,3 @@ import { GeopotentialService } from './services/geopotential.service';
   exports: [CalculationService],
 })
 export class CalculationModule {}
-

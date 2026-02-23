@@ -108,10 +108,14 @@ export default function App() {
   async function exportCsv() {
     setError(null);
     try {
-      const r = await axios.post(`${API_BASE}/export/csv`, {
-        orbit,
-        options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
-      }, { responseType: 'blob' });
+      const r = await axios.post(
+        `${API_BASE}/export/csv`,
+        {
+          orbit,
+          options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
+        },
+        { responseType: 'blob' },
+      );
       downloadBlob(r.data, 'report.csv');
     } catch (e: any) {
       setError(e?.response?.data?.message ?? e?.message ?? 'CSV export failed');
@@ -121,10 +125,14 @@ export default function App() {
   async function exportPdf() {
     setError(null);
     try {
-      const r = await axios.post(`${API_BASE}/export/pdf`, {
-        orbit,
-        options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
-      }, { responseType: 'blob' });
+      const r = await axios.post(
+        `${API_BASE}/export/pdf`,
+        {
+          orbit,
+          options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
+        },
+        { responseType: 'blob' },
+      );
       downloadBlob(r.data, 'report.pdf');
     } catch (e: any) {
       setError(e?.response?.data?.message ?? e?.message ?? 'PDF export failed');
@@ -132,6 +140,18 @@ export default function App() {
   }
 
   const points = result?.data.points ?? [];
+  // ADDED: найти перицентр и апоцентр (точки с минимальной и максимальной высотой)
+  // ADDED: безопасное вычисление перицентра и апоцентра только если есть точки
+  const perigee = useMemo(() => {
+    if (!points.length) return null;
+    return points.reduce((min, p) => (p.height < min.height ? p : min), points[0]);
+  }, [points]);
+
+  const apogee = useMemo(() => {
+    if (!points.length) return null;
+    return points.reduce((max, p) => (p.height > max.height ? p : max), points[0]);
+  }, [points]);
+
   const heights = points.map((p) => p.height);
   const total = points.map((p) => p.acceleration.total);
   const Svals = points.map((p) => p.acceleration.S);
@@ -140,6 +160,7 @@ export default function App() {
   const newton = points.map((p) => p.newtonAcceleration);
   const ratio = points.map((p) => (p.newtonAcceleration ? p.acceleration.total / p.newtonAcceleration : 0));
   const thetaDeg = points.map((p) => (p.theta * 180) / Math.PI);
+  const currentPoint = points[selectedIndex];
   const OMEGA_E = 7.292115e-5; // рад/с
   const Sangle = (OMEGA_E * tSeconds * 180) / Math.PI;
 
@@ -232,7 +253,7 @@ export default function App() {
                     />
                   </Group>
                   <Text size="xs" c="dimmed">
-                    S(t) = ωₑ · t ≈ {Sangle.toFixed(2)}° 
+                    S(t) = ωₑ · t ≈ {Sangle.toFixed(2)}°
                   </Text>
                   <Switch
                     checked={includeJ2Only}
@@ -284,15 +305,35 @@ export default function App() {
                         ускорение как функция высоты.
                       </Text>
                       <Text size="xs" c="dimmed" mb="xs">
-                        Расчёт выполнен в системе координат: {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
+                        Расчёт выполнен в системе координат:{' '}
+                        {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
                       </Text>
                       <Plot
                         data={[
                           { x: heights, y: Svals, type: 'scatter', mode: 'lines', name: 'S (м/с²)' },
                           { x: heights, y: Tvals, type: 'scatter', mode: 'lines', name: 'T (м/с²)' },
                           { x: heights, y: Wvals, type: 'scatter', mode: 'lines', name: 'W (м/с²)' },
-                          { x: heights, y: total, type: 'scatter', mode: 'lines', name: '|j| (м/с²)', line: { width: 3 } },
+                          {
+                            x: heights,
+                            y: total,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: '|j| (м/с²)',
+                            line: { width: 3 },
+                          },
                           { x: heights, y: newton, type: 'scatter', mode: 'lines', name: '|g| (м/с²)', line: { dash: 'dot' } },
+                          // ADDED: маркеры перицентра и апоцентра на полном ускорении
+                          ...(perigee && apogee ? [{
+                            x: [perigee.height, apogee.height],
+                            y: [perigee.acceleration.total, apogee.acceleration.total],
+                            mode: 'text+markers',
+                            type: 'scatter',
+                            name: 'Перицентр / Апоцентр',
+                            text: ['Перицентр', 'Апоцентр'],
+                            textposition: 'top center',
+                            marker: { color: ['red', 'blue'], size: 10 },
+                            showlegend: true,
+                          }] : [])
                         ]}
                         layout={{
                           autosize: true,
@@ -313,16 +354,35 @@ export default function App() {
                         Оценивает значимость возмущающего ускорения по сравнению с ньютоновским центральным полем.
                       </Text>
                       <Text size="xs" c="dimmed" mb="xs">
-                        Расчёт выполнен в системе координат: {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
+                        Расчёт выполнен в системе координат:{' '}
+                        {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
                       </Text>
                       <Plot
-                        data={[{ x: heights, y: ratio, type: 'scatter', mode: 'lines', name: '|j|/|g|' }]}
+                        data={[
+                          { x: heights, y: ratio, type: 'scatter', mode: 'lines', name: '|j|/|g|' },
+                          // ADDED: маркеры перицентра и апоцентра на графике отношения
+                          ...(perigee && apogee ? [{
+                            x: [perigee.height, apogee.height],
+                            y: [
+                              perigee.acceleration.total / perigee.newtonAcceleration,
+                              apogee.acceleration.total / apogee.newtonAcceleration,
+                            ],
+                            mode: 'text+markers',
+                            type: 'scatter',
+                            name: 'Перицентр / Апоцентр',
+                            text: ['Перицентр', 'Апоцентр'],
+                            textposition: 'top center',
+                            marker: { color: ['red', 'blue'], size: 10 },
+                            showlegend: true,
+                          }] : []),
+                        ]}
                         layout={{
                           autosize: true,
                           height: 300,
                           margin: { l: 50, r: 10, t: 10, b: 40 },
                           xaxis: { title: { text: 'h, км' } },
                           yaxis: { title: { text: '|j|/|g|' } },
+                          legend: { orientation: 'h' },
                         }}
                         style={{ width: '100%' }}
                         config={{ responsive: true }}
@@ -339,14 +399,34 @@ export default function App() {
                         Зависимость возмущающего ускорения от положения на орбите (по истинной аномалии θ).
                       </Text>
                       <Text size="xs" c="dimmed" mb="xs">
-                        Расчёт выполнен в системе координат: {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
+                        Расчёт выполнен в системе координат:{' '}
+                        {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
                       </Text>
                       <Plot
                         data={[
                           { x: thetaDeg, y: Svals, type: 'scatter', mode: 'lines', name: 'S(θ)' },
                           { x: thetaDeg, y: Tvals, type: 'scatter', mode: 'lines', name: 'T(θ)' },
                           { x: thetaDeg, y: Wvals, type: 'scatter', mode: 'lines', name: 'W(θ)' },
-                          { x: thetaDeg, y: total, type: 'scatter', mode: 'lines', name: '|j(θ)|', line: { width: 3 } },
+                          {
+                            x: thetaDeg,
+                            y: total,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: '|j(θ)|',
+                            line: { width: 3 },
+                          },
+                          // ADDED: маркеры перицентра и апоцентра (по углу θ)
+                          ...(perigee && apogee ? [{
+                            x: [(perigee.theta * 180) / Math.PI, (apogee.theta * 180) / Math.PI],
+                            y: [perigee.acceleration.total, apogee.acceleration.total],
+                            mode: 'text+markers',
+                            type: 'scatter',
+                            name: 'Перицентр / Апоцентр',
+                            text: ['Перицентр', 'Апоцентр'],
+                            textposition: 'top center',
+                            marker: { color: ['red', 'blue'], size: 10 },
+                            showlegend: true,
+                          }] : []),
                         ]}
                         layout={{
                           autosize: true,
@@ -362,12 +442,15 @@ export default function App() {
                     </Card>
 
                     <Card withBorder>
-                      <Text fw={600}>3D‑карта |j|(θ, h)</Text>
+                      {/* MODIFIED: уточнено название графика */}
+                      <Text fw={600}>Траектория в координатах (θ, h, |j|)</Text>
                       <Text size="xs" c="dimmed" mb="xs">
-                        Объединяет зависимость по высоте и по положению на орбите: наглядная «поверхность» возмущений.
+                        Объединяет зависимость по высоте и по положению на орбите: наглядная линия, окрашенная по
+                        величине |j|.
                       </Text>
                       <Text size="xs" c="dimmed" mb="xs">
-                        Расчёт выполнен в системе координат: {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
+                        Расчёт выполнен в системе координат:{' '}
+                        {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
                       </Text>
                       <Plot
                         data={[
@@ -376,9 +459,21 @@ export default function App() {
                             y: heights,
                             z: total,
                             type: 'scatter3d',
-                            mode: 'lines',
+                            mode: 'lines+markers',
                             name: '|j|',
-                            line: { width: 3 },
+                            // MODIFIED: добавлена окраска по величине |j| и цветовая шкала
+                            marker: {
+                              color: total,
+                              colorscale: 'Viridis',
+                              showscale: true,
+                              size: 2,
+                              colorbar: { title: '|j|, м/с²' },
+                            },
+                            line: {
+                              color: total,
+                              colorscale: 'Viridis',
+                              width: 4,
+                            },
                           } as any,
                         ]}
                         layout={{
@@ -408,14 +503,31 @@ export default function App() {
                         </Text>
                       </Group>
                       <Text size="xs" c="dimmed" mb="xs">
-                        Визуализация выполнена в системе координат: {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
+                        Визуализация выполнена в системе координат:{' '}
+                        {coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}.
                       </Text>
-                      <Box style={{ height: 360 }}>
+                      <Box
+                        style={{
+                          height: '75vh',
+                          minHeight: 550,
+                          width: '100%',
+                          position: 'relative',
+                          overflow: 'visible',
+                        }}
+                      >
                         <OrbitVisualizer
+                          key={`${coordinateSystem}-${orbit.a}-${orbit.e}`}
                           points={points as OrbitPoint[]}
                           selectedIndex={selectedIndex}
                           onSelect={setSelectedIndex}
                           useECEF={coordinateSystem === 'ECEF'}
+                          orbitalElements={{
+                            a: orbit.a,
+                            e: orbit.e,
+                            i: (orbit.i * Math.PI) / 180,
+                            Omega: (orbit.Omega * Math.PI) / 180,
+                            omega: (orbit.omega * Math.PI) / 180,
+                          }}
                         />
                       </Box>
                     </Card>
@@ -472,20 +584,22 @@ export default function App() {
                       Описание вкладок
                     </Text>
                     <Text size="sm" mb="xs">
-                      <strong>«Зависимость от высоты»</strong> — реализует требования методички: строятся графики S, T, W и
-                      полного возмущающего ускорения |j|, а также сравнение с ньютоновским полем |g|.
+                      <strong>«Зависимость от высоты»</strong> — реализует требования методички: строятся графики S, T,
+                      W и полного возмущающего ускорения |j|, а также сравнение с ньютоновским полем |g|. Красным и
+                      синим маркерами отмечены перицентр и апоцентр.
                     </Text>
                     <Text size="sm" mb="xs">
-                      <strong>«От положения на орбите»</strong> — показывает, как составляющие и полное |j| зависят от истинной
-                      аномалии θ и высоты: 2D‑графики и 3D‑поверхность |j|(θ, h).
+                      <strong>«От положения на орбите»</strong> — показывает, как составляющие и полное |j| зависят от
+                      истинной аномалии θ и высоты: 2D‑графики и 3D‑траектория, окрашенная по величине |j|.
                     </Text>
                     <Text size="sm" mb="xs">
-                      <strong>«3D орбита»</strong> — визуализация орбиты и движения спутника в выбранной системе координат
-                      (ECI/ECEF). Стрелка отображает направление и относительную величину возмущающего ускорения в текущей точке.
+                      <strong>«3D орбита»</strong> — визуализация орбиты и движения спутника в выбранной системе
+                      координат (ECI/ECEF). Стрелка отображает направление и относительную величину возмущающего
+                      ускорения в текущей точке.
                     </Text>
                     <Text size="sm">
-                      <strong>«Справка»</strong> — краткие пояснения к интерфейсу. Подробная теория и формулы находятся в
-                      лабораторной методичке и в Swagger‑документации API.
+                      <strong>«Справка»</strong> — краткие пояснения к интерфейсу. Подробная теория и формулы находятся
+                      в лабораторной методичке и в Swagger‑документации API.
                     </Text>
                   </Card>
                 </Tabs.Panel>
@@ -497,4 +611,3 @@ export default function App() {
     </AppShell>
   );
 }
-
