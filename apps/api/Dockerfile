@@ -5,7 +5,7 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN npm ci && npm install -g @nestjs/cli
+RUN npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -14,7 +14,7 @@ COPY --from=deps /app/package-lock.json ./package-lock.json
 COPY --from=deps /app/node_modules ./node_modules
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
-RUN npm run build -w @lab/shared && npm run build -w @lab/api
+RUN npm install -g @nestjs/cli && npm run build -w @lab/shared && npm run build -w @lab/api
 
 FROM node:22-alpine AS runner
 WORKDIR /app
