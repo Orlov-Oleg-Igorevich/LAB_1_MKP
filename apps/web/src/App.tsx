@@ -160,7 +160,6 @@ export default function App() {
   const newton = points.map((p) => p.newtonAcceleration);
   const ratio = points.map((p) => (p.newtonAcceleration ? p.acceleration.total / p.newtonAcceleration : 0));
   const thetaDeg = points.map((p) => (p.theta * 180) / Math.PI);
-  const currentPoint = points[selectedIndex];
   const OMEGA_E = 7.292115e-5; // рад/с
   const Sangle = (OMEGA_E * tSeconds * 180) / Math.PI;
 
@@ -326,11 +325,11 @@ export default function App() {
                           ...(perigee && apogee ? [{
                             x: [perigee.height, apogee.height],
                             y: [perigee.acceleration.total, apogee.acceleration.total],
-                            mode: 'text+markers',
-                            type: 'scatter',
+                            mode: 'text+markers' as const,
+                            type: 'scatter' as const,
                             name: 'Перицентр / Апоцентр',
                             text: ['Перицентр', 'Апоцентр'],
-                            textposition: 'top center',
+                            textposition: 'top center' as const,
                             marker: { color: ['red', 'blue'], size: 10 },
                             showlegend: true,
                           }] : [])
@@ -367,11 +366,11 @@ export default function App() {
                               perigee.acceleration.total / perigee.newtonAcceleration,
                               apogee.acceleration.total / apogee.newtonAcceleration,
                             ],
-                            mode: 'text+markers',
-                            type: 'scatter',
+                            mode: 'text+markers' as const,
+                            type: 'scatter' as const,
                             name: 'Перицентр / Апоцентр',
                             text: ['Перицентр', 'Апоцентр'],
-                            textposition: 'top center',
+                            textposition: 'top center' as const,
                             marker: { color: ['red', 'blue'], size: 10 },
                             showlegend: true,
                           }] : []),
@@ -419,11 +418,11 @@ export default function App() {
                           ...(perigee && apogee ? [{
                             x: [(perigee.theta * 180) / Math.PI, (apogee.theta * 180) / Math.PI],
                             y: [perigee.acceleration.total, apogee.acceleration.total],
-                            mode: 'text+markers',
-                            type: 'scatter',
+                            mode: 'text+markers' as const,
+                            type: 'scatter' as const,
                             name: 'Перицентр / Апоцентр',
                             text: ['Перицентр', 'Апоцентр'],
-                            textposition: 'top center',
+                            textposition: 'top center' as const,
                             marker: { color: ['red', 'blue'], size: 10 },
                             showlegend: true,
                           }] : []),
