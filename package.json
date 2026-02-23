@@ -1,0 +1,25 @@
+{
+  "name": "lab_1_mkp",
+  "version": "1.0.0",
+  "description": "Web app for Earth geopotential perturbing acceleration (MAI 604, Lab 1)",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @lab/web",
+    "dev:api": "npm run start:dev -w @lab/api",
+    "dev:web": "npm run dev -w @lab/web",
+    "build": "npm run build -ws",
+    "lint": "npm run lint -ws"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  }
+}
