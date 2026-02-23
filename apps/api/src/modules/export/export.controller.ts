@@ -118,9 +118,10 @@ export class ExportController {
       const result: CalculationResult = this.calc.calculate(body);
       const html = this.generateHtml(body, result);
 
-      // Запускаем браузер
+      // Запускаем браузер (в Docker используем системный Chromium, путь передаём через переменную окружения)
       browser = await puppeteer.launch({
-        headless: true, // ✅ Используйте boolean вместо 'new'
+        headless: true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',

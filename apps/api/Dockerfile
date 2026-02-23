@@ -22,7 +22,16 @@ ENV NODE_ENV=production
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=deps /app/node_modules ./node_modules
-RUN npx puppeteer browsers install chrome
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_SKIP_DOWNLOAD=true
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
 
