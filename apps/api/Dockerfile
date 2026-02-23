@@ -20,6 +20,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/apps/api/dist ./dist
+COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=deps /app/node_modules ./node_modules
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
