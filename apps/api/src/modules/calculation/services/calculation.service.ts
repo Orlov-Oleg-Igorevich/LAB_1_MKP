@@ -38,7 +38,7 @@ export class CalculationService {
       const M = M0 + 2 * Math.PI * frac;
 
       const E = this.kepler.solveEccentricAnomaly(M, orbit.e);
-      const theta =
+      const theta = // истинная аномалия
         2 *
         Math.atan2(
           Math.sqrt(1 + orbit.e) * Math.sin(E / 2),
@@ -67,7 +67,7 @@ export class CalculationService {
       const safeCosPhi =
         Math.abs(cosPhi) < 1e-12 ? (cosPhi >= 0 ? 1e-12 : -1e-12) : cosPhi;
 
-      // Azimuth formulas (handout, after (5))
+      // Формулы для определения азимута (материал лабораторной, после (5))
       const sinA = Math.cos(iRad) / safeCosPhi;
       const cosA = (Math.cos(u) * Math.sin(iRad)) / safeCosPhi;
 

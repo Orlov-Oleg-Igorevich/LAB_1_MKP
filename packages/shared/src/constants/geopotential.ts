@@ -1,8 +1,8 @@
 /**
- * Constants from the lab handout (page with coefficients).
- * Values are stored already scaled to the actual coefficients:
- * - Jn: given as (value * 1e-6) in the handout
- * - Cnk/Snk: given as (value * 1e-8) in the handout
+ *Константы из материалов лабораторной работы (страница с коэффициентами).
+ * Значения уже приведены к фактическим коэффициентам:
+ * - Jn: в материале указано как (значение * 1e-6)
+ * - Cnk/Snk: в материале указано как (значение * 1e-8)
  */
 export const GEOPOTENTIAL_CONSTANTS = {
   J: {

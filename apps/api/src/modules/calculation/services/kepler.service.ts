@@ -4,8 +4,8 @@ import { PHYSICS_CONSTANTS } from '@lab/shared';
 @Injectable()
 export class KeplerService {
   /**
-   * Solve Kepler equation E = M + e sin(E) by fixed-point iteration
-   * as specified in the lab handout.
+   * Решение уравнение Кеплера E = M + e sin(E) с помощью численного приближения.
+   * По умолчанию стоит ограничение на 1000 итераций
    */
   solveEccentricAnomaly(
     M: number,

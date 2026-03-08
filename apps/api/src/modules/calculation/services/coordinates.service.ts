@@ -12,7 +12,7 @@ export interface KeplerState {
 @Injectable()
 export class CoordinatesService {
   /**
-   * (6) Coordinates in inertial equatorial frame (АГЭСК in the handout).
+   * (6) Координаты в АГЭСК.
    */
   positionECIFromElements(params: {
     r: number;
@@ -35,8 +35,10 @@ export class CoordinatesService {
   }
 
   /**
-   * (7) Convert ECI (АГЭСК) to ECEF (ГСК) via rotation about Z by S(t).
-   * The handout defines S(t) via sidereal time; here we use S(t)=omegaE*tSeconds.
+   * (7) Преобразование ECI (АГЭСК) в ECEF (ГСК)
+   * путем поворота вокруг оси Z на S(t).
+   * В лабораторной работе S(t) определяется через звездное время;
+   * здесь мы используем S(t)=omegaE*tSeconds.
    */
   eciToEcef(rEci: Vector3, tSeconds: number): Vector3 {
     const S = PHYSICS_CONSTANTS.omegaE * tSeconds;

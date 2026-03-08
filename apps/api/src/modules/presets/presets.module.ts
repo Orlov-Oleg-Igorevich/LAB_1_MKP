@@ -8,4 +8,3 @@ import { PresetsService } from './presets.service';
   exports: [PresetsService],
 })
 export class PresetsModule {}
-

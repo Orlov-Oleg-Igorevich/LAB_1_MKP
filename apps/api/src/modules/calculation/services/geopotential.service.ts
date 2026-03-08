@@ -13,10 +13,11 @@ export class GeopotentialService {
   constructor(private readonly legendre: LegendreService) {}
 
   /**
-   * Compute perturbing acceleration components (jr, jphi, jlambda) in spherical coordinates,
-   * following formula (11) of the lab handout for the disturbing potential U_voz m.
-   *
-   * Returns in km/s^2 (convert to m/s^2 outside if needed).
+   * Вычислить возмущающие компоненты ускорения (jr, jphi, jlambda)
+   * в сферических координатах по формуле (11) из методического
+   * пособия по лабораторной работе для возмущающего потенциала
+   * U_voz m. Результат будет в км/с^2
+   * (при необходимости переведите в м/с^2).
    */
   accelerationSphericalKm(params: {
     rKm: number;
@@ -30,7 +31,7 @@ export class GeopotentialService {
     usedHarmonics: { n: number; k: number }[];
   } {
     const { rKm, phiRad, lambdaRad, options } = params;
-    const q = Math.sin(phiRad); // q = sin(phi)
+    const q = Math.sin(phiRad);
     const cphi = Math.cos(phiRad);
 
     const mu = PHYSICS_CONSTANTS.mu;
@@ -54,7 +55,7 @@ export class GeopotentialService {
       if (!options.j2Only || n === 2) {
         if (Jn !== 0) {
           const Pn = this.legendre.Plm(n, 0, q);
-          const dPn_dq = this.legendre.dPlm_dx(n, 0, q); // d/d(sin phi)
+          const dPn_dq = this.legendre.dPlm_dx(n, 0, q); // d/d(sin(phi))
 
           jr += (n + 1) * Jn * rn * Pn;
           jphi += Jn * rn * dPn_dq;
@@ -82,14 +83,14 @@ export class GeopotentialService {
 
         jr -= (n + 1) * rn * Pnk * A;
         jphi -= rn * dPnk_dq * A;
-        // The handout formula (11) for j_lambda is written without an explicit k multiplier.
-        // We follow the handout text.
+        // Формула (11) для j_lambda в методичке приведена
+        // без явного множителя k. Здесь используется k.
         jlambda += k * rn * Pnk * B;
         usedHarmonics.push({ n, k });
       }
     }
 
-    // Apply common multipliers (see formula (11))
+    // Применение общих множителей (см. формулу (11))
     jr = base * jr;
     jphi = base * cphi * jphi;
     const safeCphi =

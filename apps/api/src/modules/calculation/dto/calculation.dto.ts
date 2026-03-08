@@ -13,32 +13,40 @@ import { Type } from 'class-transformer';
 import type { CoordinateSystem } from '@lab/shared';
 
 export class OrbitalElementsDto {
-  @ApiProperty({ example: 10000, description: 'Semi-major axis, km' })
+  @ApiProperty({ example: 10000, description: 'Большая полуось, km' })
   @IsNumber()
   @Min(1)
-  a!: number;
+  a: number;
 
-  @ApiProperty({ example: 0.1, description: 'Eccentricity' })
+  @ApiProperty({ example: 0.1, description: 'Эксцентриситет' })
   @IsNumber()
   @Min(0)
   @Max(0.999999)
-  e!: number;
+  e: number;
 
-  @ApiProperty({ example: 10, description: 'Inclination, deg' })
+  @ApiProperty({ example: 10, description: 'Наклонение, deg' })
   @IsNumber()
-  i!: number;
+  i: number;
 
-  @ApiProperty({ example: 5, description: 'RAAN Ω, deg', name: 'Omega' })
+  @ApiProperty({
+    example: 5,
+    description: 'Долгота восходящего узла Ω, deg',
+    name: 'Omega',
+  })
   @IsNumber()
-  Omega!: number;
+  Omega: number;
 
-  @ApiProperty({ example: 0, description: 'Argument of perigee ω, deg', name: 'omega' })
+  @ApiProperty({
+    example: 0,
+    description: 'Аргумент перицентра ω, deg',
+    name: 'omega',
+  })
   @IsNumber()
-  omega!: number;
+  omega: number;
 
-  @ApiProperty({ example: 0, description: 'Mean anomaly M, deg' })
+  @ApiProperty({ example: 0, description: 'Средняя аномалия M, deg' })
   @IsNumber()
-  M!: number;
+  M: number;
 }
 
 export class CalculationOptionsDto {
@@ -76,7 +84,8 @@ export class CalculationOptionsDto {
   @ApiProperty({
     required: false,
     default: 0,
-    description: 'Seconds since t=0; used in S(t)=omegaE*t (simplified)',
+    description:
+      'Секунд с момента t=0; используется в S(t)=omegaE*t (упрощенно)',
   })
   @IsOptional()
   @IsNumber()
@@ -88,7 +97,7 @@ export class CalculationRequestDto {
   @ApiProperty()
   @ValidateNested()
   @Type(() => OrbitalElementsDto)
-  orbit!: OrbitalElementsDto;
+  orbit: OrbitalElementsDto;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -96,4 +105,3 @@ export class CalculationRequestDto {
   @Type(() => CalculationOptionsDto)
   options?: CalculationOptionsDto;
 }
-

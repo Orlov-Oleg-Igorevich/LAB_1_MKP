@@ -10,19 +10,23 @@ function doubleFactorial(n: number): number {
 @Injectable()
 export class LegendreService {
   /**
-   * Unnormalized associated Legendre P_l^m(x) for 0<=m<=l using standard recurrence.
-   * x = sin(phi) in the lab handout.
+   * Неперенормированные ассоциированные полиномы Лежандра
+   * P_l^m(x) для 0<=m<=l, вычисленные с помощью стандартного
+   * рекуррентного соотношения.
+   * x = sin(phi) в методичке.
+   * l = n в методичке.
+   * m = k в методичке.
    */
   Plm(l: number, m: number, x: number): number {
     if (m < 0 || m > l) return 0;
 
-    // P_m^m(x) = (-1)^m (2m-1)!! (1-x^2)^{m/2}
+    // P_m^m(x) = (-1)^m*(2m-1)!!*(1-x^2)^{m/2}
     const oneMinus = Math.max(0, 1 - x * x);
     const Pmm = Math.pow(oneMinus, m / 2) * doubleFactorial(2 * m - 1);
 
     if (l === m) return Pmm;
 
-    // P_{m+1}^m(x) = x(2m+1) P_m^m(x)
+    // P_{m+1}^m(x) = x*(2m+1)*P_m^m(x)
     const Pmmp1 = x * (2 * m + 1) * Pmm;
     if (l === m + 1) return Pmmp1;
 
@@ -37,8 +41,8 @@ export class LegendreService {
   }
 
   /**
-   * d/dx P_l^m(x). Uses identity:
-   * dP_l^m/dx = (1/(x^2-1)) * (l x P_l^m(x) - (l+m) P_{l-1}^m(x))
+   * d/dx P_l^m(x). Использует:
+   * dP_l^m/dx = (1/(x^2-1)) * (l*x*P_l^m(x) - (l+m)*P_{l-1}^m(x))
    */
   dPlm_dx(l: number, m: number, x: number): number {
     const denom = x * x - 1;

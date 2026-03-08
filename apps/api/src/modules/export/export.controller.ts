@@ -15,7 +15,7 @@ import { CalculationRequestDto } from '../calculation/dto/calculation.dto';
 import { CalculationService } from '../calculation/services/calculation.service';
 import { rad2deg } from '@lab/shared';
 
-// === Интерфейсы (оставляем как есть) ===
+// === Интерфейсы ===
 interface Harmonic {
   n: number;
   k: number;

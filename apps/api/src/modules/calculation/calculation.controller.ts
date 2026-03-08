@@ -9,7 +9,7 @@ export class CalculationController {
   constructor(private readonly calculation: CalculationService) {}
 
   @Post('calculate')
-  @ApiOkResponse({ description: 'Compute perturbing acceleration along orbit' })
+  @ApiOkResponse({ description: 'Вычислить возмущающее ускорение на орбите' })
   calculate(@Body() body: CalculationRequestDto) {
     return this.calculation.calculate(body);
   }
@@ -17,7 +17,7 @@ export class CalculationController {
   @Post('compare')
   @ApiOkResponse({
     description:
-      'Compare J2-only vs full model (same as calculate with includeJ2Only=true)',
+      'Сравните модель только с J2 и полную модель (то же самое, что и при вызове calculate с параметром includeJ2Only=true)',
   })
   compare(@Body() body: CalculationRequestDto) {
     return this.calculation.calculate({
