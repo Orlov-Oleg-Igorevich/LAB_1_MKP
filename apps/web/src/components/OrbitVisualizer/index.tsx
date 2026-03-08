@@ -3,12 +3,12 @@ import { OrbitControls, Line, Sphere, Text, Html } from '@react-three/drei';
 import { useMemo, useState, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import type { OrbitPoint, Vector3 } from '@lab/shared';
+import classes from './OrbitVisualizer.module.css';
 
 // ============================================================================
 // КОНСТАНТЫ
 // ============================================================================
 const EARTH_R0_KM = 6378.137;
-// const OMEGA_E = 7.292115e-5;
 
 // ============================================================================
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -58,7 +58,7 @@ const computeRTNAxes = (
 };
 
 // ============================================================================
-// КОМПОНЕНТ: СТРЕЛКА (улучшенная)
+// КОМПОНЕНТ: СТРЕЛКА
 // ============================================================================
 interface ArrowProps {
   start: [number, number, number];
@@ -89,12 +89,10 @@ const Arrow = ({
     direction
   );
 
-  // Длина цилиндра = общая длина минус длина головки
   const shaftLength = Math.max(length - headLength, 0);
 
   return (
     <group position={start} quaternion={quaternion}>
-      {/* Цилиндр: смещён так, чтобы занимать интервал [0, shaftLength] по Y */}
       {shaftLength > 0 && (
         <mesh position={[0, shaftLength / 2, 0]}>
           <cylinderGeometry args={[shaftRadius, shaftRadius, shaftLength, 8]} />
@@ -107,7 +105,6 @@ const Arrow = ({
           />
         </mesh>
       )}
-      {/* Конус: располагается от shaftLength до length по Y */}
       <mesh position={[0, shaftLength + headLength / 2, 0]}>
         <coneGeometry args={[headRadius, headLength, 8]} />
         <meshStandardMaterial
@@ -123,7 +120,7 @@ const Arrow = ({
 };
 
 // ============================================================================
-// КОМПОНЕНТ: СПУТНИК (исправленный)
+// КОМПОНЕНТ: СПУТНИК
 // ============================================================================
 interface SatelliteProps {
   point: OrbitPoint;
@@ -146,20 +143,17 @@ const Satellite = ({
   const tangent = computeTangent(allPositions, point.index);
   const { R, T: T_dir, W: W_dir } = computeRTNAxes(position, tangent);
 
-  // Вектор полного возмущения
   const jVector: [number, number, number] = [
     R[0] * S + T_dir[0] * T + W_dir[0] * W,
     R[1] * S + T_dir[1] * T + W_dir[1] * W,
     R[2] * S + T_dir[2] * T + W_dir[2] * W,
   ];
 
-  // Увеличенный масштаб для лучшей видимости
   const componentScale = vectorScale * 1.5;
   const totalScale = vectorScale * 2;
 
   return (
     <group position={position}>
-      {/* Спутник - делаем чуть меньше */}
       <Sphere args={[earthRadius * 0.06, 24, 24]}>
         <meshStandardMaterial
           color="#ff6b6b"
@@ -168,10 +162,8 @@ const Satellite = ({
         />
       </Sphere>
 
-      {/* Компоненты S, T, W */}
       {showComponents && (
         <>
-          {/* S - радиальная (красная) */}
           <Arrow
             start={[0, 0, 0]}
             end={[
@@ -185,7 +177,6 @@ const Satellite = ({
             headRadius={0.15}
           />
           
-          {/* T - трансверсальная (зелёная) */}
           <Arrow
             start={[0, 0, 0]}
             end={[
@@ -199,7 +190,6 @@ const Satellite = ({
             headRadius={0.15}
           />
           
-          {/* W - бинормальная (синяя) */}
           <Arrow
             start={[0, 0, 0]}
             end={[
@@ -215,7 +205,6 @@ const Satellite = ({
         </>
       )}
 
-      {/* Полное возмущение (жёлтая, толще и длиннее) */}
       <Arrow
         start={[0, 0, 0]}
         end={[
@@ -229,7 +218,6 @@ const Satellite = ({
         headRadius={0.25}
       />
 
-      {/* Подписи компонент (если включены) */}
       {showComponents && (
         <>
           <Text
@@ -272,7 +260,7 @@ const Satellite = ({
 };
 
 // ============================================================================
-// КОМПОНЕНТ: ОСИ КООРДИНАТ (ДОБАВЛЕН!)
+// КОМПОНЕНТ: ОСИ КООРДИНАТ
 // ============================================================================
 const CoordinateAxes = ({
   earthRadius,
@@ -313,7 +301,7 @@ const CoordinateAxes = ({
 };
 
 // ============================================================================
-// КОМПОНЕНТ: ЭЛЕМЕНТЫ ОРБИТЫ (ИСПРАВЛЕННЫЙ)
+// КОМПОНЕНТ: ЭЛЕМЕНТЫ ОРБИТЫ
 // ============================================================================
 interface OrbitalElementsDisplayProps {
   orbitalElements: { a: number; e: number; i: number; Omega: number; omega: number };
@@ -325,27 +313,23 @@ const OrbitalElementsDisplay = ({
   earthRadius,
 }: OrbitalElementsDisplayProps) => {
   const { i, Omega, omega } = orbitalElements;
-  const r = earthRadius * 2.5;          // радиус отображения дуг
+  const r = earthRadius * 2.5;
   const segments = 48;
 
-  // Направления (единичные векторы)
   const X = new THREE.Vector3(1, 0, 0);
   const Z = new THREE.Vector3(0, 0, 1);
-  const U = new THREE.Vector3(Math.cos(Omega), Math.sin(Omega), 0); // на восходящий узел
-  // Нормаль к орбите
+  const U = new THREE.Vector3(Math.cos(Omega), Math.sin(Omega), 0);
   const W = new THREE.Vector3(
     Math.sin(i) * Math.sin(Omega),
     -Math.sin(i) * Math.cos(Omega),
     Math.cos(i)
   );
-  // Направление на перицентр
   const P = new THREE.Vector3(
     Math.cos(Omega) * Math.cos(omega) - Math.sin(Omega) * Math.sin(omega) * Math.cos(i),
     Math.sin(Omega) * Math.cos(omega) + Math.cos(Omega) * Math.sin(omega) * Math.cos(i),
     Math.sin(omega) * Math.sin(i)
   );
 
-  // Вспомогательная функция: дуга на сфере
   const getArcPoints = (start: THREE.Vector3, axis: THREE.Vector3, angle: number, radius: number, segments: number) => {
     const points: THREE.Vector3[] = [];
     for (let j = 0; j <= segments; j++) {
@@ -357,23 +341,19 @@ const OrbitalElementsDisplay = ({
     return points;
   };
 
-  // Дуги
   const omegaArcPoints = getArcPoints(X, Z, Omega, r, segments);
   const iArcPoints = getArcPoints(Z, U, i, r, segments);
   const wArcPoints = getArcPoints(U, W, omega, r, segments);
 
-  // Середины дуг для подписей
   const midOmega = X.clone().applyAxisAngle(Z, Omega / 2).multiplyScalar(r * 1.1);
   const midI = Z.clone().applyAxisAngle(U, i / 2).multiplyScalar(r * 1.1);
   const midW = U.clone().applyAxisAngle(W, omega / 2).multiplyScalar(r * 1.1);
 
-  // Точки на концах дуг (на сфере)
   const pointU = U.clone().multiplyScalar(r);
   const pointP = P.clone().multiplyScalar(r);
   const pointZ = Z.clone().multiplyScalar(r);
   const pointW = W.clone().multiplyScalar(r);
 
-  // Линия узлов
   const nodeLinePoints: [number, number, number][] = [
     [-r * 0.9 * Math.cos(Omega), -r * 0.9 * Math.sin(Omega), 0],
     [ r * 0.9 * Math.cos(Omega),  r * 0.9 * Math.sin(Omega), 0],
@@ -381,7 +361,6 @@ const OrbitalElementsDisplay = ({
 
   return (
     <group>
-      {/* Точка весеннего равноденствия */}
       <group position={X.clone().multiplyScalar(r * 1.2).toArray()}>
         <Sphere args={[earthRadius * 0.05, 16, 16]}>
           <meshBasicMaterial color="#ff6666" />
@@ -389,10 +368,8 @@ const OrbitalElementsDisplay = ({
         <Text position={[earthRadius * 0.2, 0, 0]} fontSize={earthRadius * 0.12} color="#ff6666" anchorX="left">♈</Text>
       </group>
 
-      {/* Линия узлов */}
       <Line points={nodeLinePoints} color="#888" lineWidth={1.5} dashed dashScale={2} />
 
-      {/* Восходящий узел */}
       <group position={pointU.toArray()}>
         <Sphere args={[earthRadius * 0.06, 16, 16]}>
           <meshBasicMaterial color="#4488ff" />
@@ -400,27 +377,21 @@ const OrbitalElementsDisplay = ({
         <Html position={[0, 0, earthRadius * 0.15]} center style={{ color: '#4488ff', fontSize: '24px', fontWeight: 'bold', textShadow: '1px 1px 2px black', userSelect: 'none', pointerEvents: 'none' }}>☊</Html>
       </group>
 
-      {/* Дуга Ω */}
       <Line points={omegaArcPoints.map(p => p.toArray())} color="#4488ff" lineWidth={2} transparent opacity={0.7} />
       <Text position={midOmega.toArray()} fontSize={earthRadius * 0.1} color="#4488ff" anchorX="center" anchorY="middle">Ω</Text>
 
-      {/* Дуга i */}
       <Line points={iArcPoints.map(p => p.toArray())} color="#66ff66" lineWidth={2} transparent opacity={0.7} />
       <Text position={midI.toArray()} fontSize={earthRadius * 0.1} color="#66ff66" anchorX="center" anchorY="middle">i</Text>
 
-      {/* Дуга ω */}
       <Line points={wArcPoints.map(p => p.toArray())} color="#ffaa00" lineWidth={2} transparent opacity={0.7} />
       <Text position={midW.toArray()} fontSize={earthRadius * 0.1} color="#ffaa00" anchorX="center" anchorY="middle">ω</Text>
 
-      {/* Пунктирные линии для i: от центра к Z и к W */}
       <Line points={[[0, 0, 0], pointZ.toArray()]} color="#66ff66" lineWidth={1.5} dashed dashScale={4} transparent opacity={0.5} />
       <Line points={[[0, 0, 0], pointW.toArray()]} color="#66ff66" lineWidth={1.5} dashed dashScale={4} transparent opacity={0.5} />
 
-      {/* Пунктирные линии для ω: от центра к U и к P */}
       <Line points={[[0, 0, 0], pointU.toArray()]} color="#ffaa00" lineWidth={1.5} dashed dashScale={4} transparent opacity={0.5} />
       <Line points={[[0, 0, 0], pointP.toArray()]} color="#ffaa00" lineWidth={1.5} dashed dashScale={4} transparent opacity={0.5} />
 
-      {/* Акцент на точках перицентра и нормали */}
       <group position={pointP.toArray()}>
         <Sphere args={[earthRadius * 0.03, 8, 8]}>
           <meshBasicMaterial color="#ffaa00" />
@@ -436,7 +407,7 @@ const OrbitalElementsDisplay = ({
 };
 
 // ============================================================================
-// КОМПОНЕНТ: ПАНЕЛЬ УПРАВЛЕНИЯ (ИСПРАВЛЕННАЯ!)
+// КОМПОНЕНТ: ПАНЕЛЬ УПРАВЛЕНИЯ
 // ============================================================================
 interface ControlPanelProps {
   selectedIndex: number;
@@ -468,82 +439,47 @@ const ControlPanel = ({
   onToggleComponents,
 }: ControlPanelProps) => {
   return (
-    <div style={{
-      position: 'absolute',
-      top: '16px',
-      left: '16px',
-      backgroundColor: 'rgba(17, 24, 39, 0.95)',
-      color: 'white',
-      padding: '16px',
-      borderRadius: '12px',
-      fontSize: '14px',
-      backdropFilter: 'blur(8px)',
-      border: '1px solid rgba(75, 85, 99, 0.8)',
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
-      minWidth: '300px',
-      zIndex: 10000,
-      pointerEvents: 'auto',
-    }}>
-      <div style={{ fontWeight: 'bold', color: '#60a5fa', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className={classes.controlPanel}>
+      <div className={classes.header}>
         <span>🛰 Орбитальный визуализатор</span>
-        <span style={{
-          padding: '2px 8px',
-          borderRadius: '4px',
-          fontSize: '11px',
-          backgroundColor: useECEF ? 'rgba(34, 197, 94, 0.2)' : 'rgba(96, 165, 250, 0.2)',
-          color: useECEF ? '#4ade80' : '#60a5fa',
-        }}>
+        <span className={`${classes.badge} ${useECEF ? classes.badgeEcef : classes.badgeEci}`}>
           {useECEF ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}
         </span>
       </div>
 
-      {/* Прогресс */}
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>
+      <div className={classes.progressSection}>
+        <div className={classes.progressLabel}>
           <span>Точка</span>
           <span>{selectedIndex + 1} / {totalPoints}</span>
         </div>
-        <div style={{ height: '6px', backgroundColor: '#374151', borderRadius: '3px', overflow: 'hidden' }}>
-          <div style={{
-            height: '100%',
-            backgroundColor: 'linear-gradient(90deg, #3b82f6, #22d3ee)',
-            width: `${((selectedIndex + 1) / totalPoints) * 100}%`,
-            transition: 'width 0.2s',
-            background: 'linear-gradient(90deg, #3b82f6, #22d3ee)',
-          }} />
+        <div className={classes.progressBar}>
+          <div 
+            className={classes.progressFill} 
+            style={{ width: `${((selectedIndex + 1) / totalPoints) * 100}%` }} 
+          />
         </div>
       </div>
 
-      {/* Параметры точки */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '8px',
-        padding: '8px 0',
-        borderTop: '1px solid #374151',
-        borderBottom: '1px solid #374151',
-        marginBottom: '12px',
-        fontSize: '12px',
-      }}>
+      <div className={classes.paramsGrid}>
         <div>
-          <span style={{ color: '#6b7280' }}>Высота</span>
-          <div style={{ fontFamily: 'monospace' }}>{currentPoint.height.toFixed(0)} км</div>
+          <span className={classes.paramLabel}>Высота</span>
+          <div className={classes.paramValue}>{currentPoint.height.toFixed(0)} км</div>
         </div>
         <div>
-          <span style={{ color: '#6b7280' }}>|j|</span>
-          <div style={{ fontFamily: 'monospace', color: '#fbbf24' }}>
+          <span className={classes.paramLabel}>|j|</span>
+          <div className={classes.paramValue} style={{ color: '#fbbf24' }}>
             {(currentPoint.acceleration.total * 1e6).toFixed(1)} мкм/с²
           </div>
         </div>
         <div>
-          <span style={{ color: '#6b7280' }}>S</span>
-          <div style={{ fontFamily: 'monospace', color: '#f87171' }}>
+          <span className={classes.paramLabel}>S</span>
+          <div className={classes.paramValue} style={{ color: '#f87171' }}>
             {(currentPoint.acceleration.S * 1e6).toFixed(1)}
           </div>
         </div>
         <div>
-          <span style={{ color: '#6b7280' }}>T/W</span>
-          <div style={{ fontFamily: 'monospace' }}>
+          <span className={classes.paramLabel}>T/W</span>
+          <div className={classes.paramValue}>
             <span style={{ color: '#4ade80' }}>{(currentPoint.acceleration.T * 1e6).toFixed(1)}</span>
             <span style={{ color: '#6b7280', margin: '0 4px' }}>/</span>
             <span style={{ color: '#60a5fa' }}>{(currentPoint.acceleration.W * 1e6).toFixed(1)}</span>
@@ -551,64 +487,20 @@ const ControlPanel = ({
         </div>
       </div>
 
-      {/* Кнопки управления */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+      <div className={classes.controls}>
         <button
           onClick={onTogglePlay}
-          style={{
-            flex: 1,
-            padding: '6px 12px',
-            borderRadius: '8px',
-            fontWeight: 500,
-            border: 'none',
-            cursor: 'pointer',
-            backgroundColor: isPlaying ? '#d97706' : '#059669',
-            color: 'white',
-            transition: 'background-color 0.2s',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = isPlaying ? '#b45309' : '#047857'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = isPlaying ? '#d97706' : '#059669'}
+          className={`${classes.button} ${isPlaying ? classes.buttonPause : classes.buttonPlay}`}
         >
           {isPlaying ? '⏸ Пауза' : '▶ Старт'}
         </button>
-        <button
-          onClick={onPrevious}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#374151',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#374151'}
-        >
-          ◀
-        </button>
-        <button
-          onClick={onNext}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#374151',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#374151'}
-        >
-          ▶
-        </button>
+        <button onClick={onPrevious} className={classes.buttonNav}>◀</button>
+        <button onClick={onNext} className={classes.buttonNav}>▶</button>
       </div>
 
-      {/* Настройки */}
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', marginBottom: '8px' }}>
-          <span style={{ color: '#9ca3af' }}>Задержка, мс</span>
+      <div className={classes.settings}>
+        <div className={classes.sliderContainer}>
+          <span className={classes.sliderLabel}>Задержка, мс</span>
           <input
             type="range"
             min={200}
@@ -616,28 +508,19 @@ const ControlPanel = ({
             step={100}
             value={animationDelay}
             onChange={(e) => onDelayChange(Number(e.target.value))}
-            style={{
-              width: '120px',
-              accentColor: '#3b82f6',
-              cursor: 'pointer',
-            }}
+            className={classes.slider}
           />
-          <span style={{ fontFamily: 'monospace', width: '40px', textAlign: 'right' }}>{animationDelay}</span>
+          <span className={classes.sliderValue}>{animationDelay}</span>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
+        <label className={classes.checkboxLabel}>
           <input
             type="checkbox"
             checked={showComponents}
             onChange={onToggleComponents}
-            style={{
-              width: '16px',
-              height: '16px',
-              accentColor: '#3b82f6',
-              cursor: 'pointer',
-            }}
+            className={classes.checkbox}
           />
-          <span style={{ color: '#d1d5db' }}>Показать S/T/W компоненты</span>
+          <span>Показать S/T/W компоненты</span>
         </label>
       </div>
     </div>
@@ -645,21 +528,8 @@ const ControlPanel = ({
 };
 
 // ============================================================================
-// ОСНОВНАЯ СЦЕНА
+// АНИМАЦИОННЫЙ КОНТРОЛЛЕР
 // ============================================================================
-interface OrbitSceneProps {
-  points: OrbitPoint[];
-  selectedIndex: number;
-  useECEF: boolean;
-  scale: number;
-  orbitalElements?: { a: number; e: number; i: number; Omega: number; omega: number };
-  vectorScale: number;
-  showComponents: boolean;
-}
-
-
-
-
 interface AnimationControllerProps {
   points: OrbitPoint[];
   selectedIndex: number;
@@ -687,9 +557,21 @@ const AnimationController = ({
     }
   });
 
-  return null; // Этот компонент ничего не рендерит в сцену
+  return null;
 };
 
+// ============================================================================
+// ОСНОВНАЯ СЦЕНА
+// ============================================================================
+interface OrbitSceneProps {
+  points: OrbitPoint[];
+  selectedIndex: number;
+  useECEF: boolean;
+  scale: number;
+  orbitalElements?: { a: number; e: number; i: number; Omega: number; omega: number };
+  vectorScale: number;
+  showComponents: boolean;
+}
 
 const OrbitScene = ({
   points,
@@ -728,12 +610,10 @@ const OrbitScene = ({
       />
       <pointLight position={[-20, -15, -20]} intensity={0.4} color="#4488ff" />
 
-      {/* Земля */}
       <Sphere args={[earthRadius, 64, 64]} receiveShadow>
         <meshPhongMaterial color="#1a3a5c" specular="#3366aa" shininess={15} />
       </Sphere>
 
-      {/* Атмосфера */}
       <Sphere args={[earthRadius * 1.03, 48, 48]}>
         <meshBasicMaterial
           color="#4488ff"
@@ -743,7 +623,6 @@ const OrbitScene = ({
         />
       </Sphere>
 
-      {/* Орбита */}
       <Line
         points={positions}
         color="#ffd700"
@@ -752,7 +631,6 @@ const OrbitScene = ({
         opacity={0.95}
       />
 
-      {/* Перицентр */}
       {periIdx >= 0 && positions[periIdx] && (
         <group position={positions[periIdx]}>
           <Sphere args={[earthRadius * 0.04, 16, 16]}>
@@ -768,7 +646,6 @@ const OrbitScene = ({
         </group>
       )}
 
-      {/* Апоцентр */}
       {apoIdx >= 0 && positions[apoIdx] && (
         <group position={positions[apoIdx]}>
           <Sphere args={[earthRadius * 0.04, 16, 16]}>
@@ -784,7 +661,6 @@ const OrbitScene = ({
         </group>
       )}
 
-      {/* Спутник */}
       {points[selectedIndex] && positions[selectedIndex] && (
         <Satellite
           point={points[selectedIndex]}
@@ -796,10 +672,8 @@ const OrbitScene = ({
         />
       )}
 
-      {/* Оси координат */}
       <CoordinateAxes earthRadius={earthRadius} system={useECEF ? 'ECEF' : 'ECI'} />
 
-      {/* Элементы орбиты (только для АГЭСК) */}
       {!useECEF && orbitalElements && (
         <OrbitalElementsDisplay
           orbitalElements={orbitalElements}
@@ -807,7 +681,6 @@ const OrbitScene = ({
         />
       )}
 
-      {/* Экватор (плоскость XY) */}
       <Line
         points={[
           [-6 * earthRadius, 0, 0],
@@ -835,7 +708,6 @@ const OrbitScene = ({
     </>
   );
 };
-
 
 // ============================================================================
 // ГЛАВНЫЙ КОМПОНЕНТ
@@ -871,11 +743,11 @@ export default function OrbitVisualizer({
   }, [points, useECEF]);
 
   const vectorScale = useMemo(() => {
-    if (!points.length) return 1; // запасное значение
+    if (!points.length) return 1;
     const avgAccel = points.reduce((sum, p) => sum + p.acceleration.total, 0) / points.length;
-    const targetLength = 1.5; // желаемая длина среднего вектора в единицах сцены
+    const targetLength = 1.5;
     return targetLength / Math.max(avgAccel, 1e-10);
-}, [points]);
+  }, [points]);
 
   const handleTogglePlay = useCallback(() => setIsPlaying(!isPlaying), [isPlaying]);
   const handlePrevious = useCallback(() => onSelect((selectedIndex - 1 + points.length) % points.length), [selectedIndex, points.length, onSelect]);
@@ -885,18 +757,11 @@ export default function OrbitVisualizer({
 
   if (!points.length) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        minHeight: '400px',
-        backgroundColor: '#0a0e17',
-        color: '#ef4444',
-        fontSize: '16px',
-      }}>
-        ⚠ Нет данных для отображения<br />
-        <span style={{ color: '#9ca3af', fontSize: '14px' }}>Загрузите результаты расчёта орбиты</span>
+      <div className={classes.emptyState}>
+        <div>
+          ⚠ Нет данных для отображения<br />
+          <span className={classes.emptyStateText}>Загрузите результаты расчёта орбиты</span>
+        </div>
       </div>
     );
   }
@@ -904,13 +769,7 @@ export default function OrbitVisualizer({
   const currentPoint = points[selectedIndex];
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      minHeight: '400px',
-      backgroundColor: '#0a0e17',
-    }}>
+    <div className={classes.container}>
       <Canvas
         style={{ width: '100%', height: '100%' }}
         camera={{
@@ -933,7 +792,6 @@ export default function OrbitVisualizer({
           animationDelay={animationDelay}
         />
 
-
         <OrbitScene
           points={points}
           selectedIndex={selectedIndex}
@@ -945,7 +803,6 @@ export default function OrbitVisualizer({
         />
       </Canvas>
 
-      {/* ПАНЕЛЬ УПРАВЛЕНИЯ - теперь точно видна! */}
       <ControlPanel
         selectedIndex={selectedIndex}
         totalPoints={points.length}
@@ -961,39 +818,25 @@ export default function OrbitVisualizer({
         onToggleComponents={handleToggleComponents}
       />
 
-      {/* Легенда */}
-      <div style={{
-        position: 'absolute',
-        bottom: '16px',
-        left: '16px',
-        backgroundColor: 'rgba(17, 24, 39, 0.9)',
-        color: 'white',
-        padding: '10px',
-        borderRadius: '8px',
-        fontSize: '11px',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(75, 85, 99, 0.8)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-        zIndex: 10000,
-      }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#d1d5db' }}>Легенда</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+      <div className={classes.legend}>
+        <div className={classes.legendTitle}>Легенда</div>
+        <div className={classes.legendItem}>
           <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff6b6b' }} />
           <span>Спутник</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+        <div className={classes.legendItem}>
           <div style={{ width: '16px', height: '2px', backgroundColor: '#ffd700' }} />
           <span>Орбита</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+        <div className={classes.legendItem}>
           <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#00ff00' }} />
           <span>Перицентр (Π)</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+        <div className={classes.legendItem}>
           <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff4444' }} />
           <span>Апоцентр (A)</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '4px', marginTop: '4px', borderTop: '1px solid #374151' }}>
+        <div className={classes.legendDivider}>
           <div style={{ display: 'flex', gap: '2px' }}>
             <div style={{ width: '8px', height: '8px', backgroundColor: '#ff6b6b' }} />
             <div style={{ width: '8px', height: '8px', backgroundColor: '#4ade80' }} />
@@ -1003,19 +846,7 @@ export default function OrbitVisualizer({
         </div>
       </div>
 
-      {/* Подсказка */}
-      <div style={{
-        position: 'absolute',
-        bottom: '16px',
-        right: '16px',
-        fontSize: '10px',
-        color: '#6b7280',
-        backgroundColor: 'rgba(17, 24, 39, 0.7)',
-        padding: '6px 10px',
-        borderRadius: '4px',
-        border: '1px solid rgba(75, 85, 99, 0.5)',
-        zIndex: 10000,
-      }}>
+      <div className={classes.hint}>
         <div>🖱 ЛКМ: вращение | ПКМ: панорама | Колесо: зум</div>
         <div style={{ marginTop: '2px' }}>🔄 Двойной клик: сброс камеры</div>
       </div>
