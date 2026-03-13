@@ -58,7 +58,7 @@ export default function HeightTab({ points, perigee, apogee, coordinateSystem, o
               name: '|j| (м/с²)',
               line: { width: 3 },
             },
-            { x: heights, y: newton, type: 'scatter', mode: 'lines', name: '|g| (м/с²)', line: { dash: 'dot' } },
+            // { x: heights, y: newton, type: 'scatter', mode: 'lines', name: '|g| (м/с²)', line: { dash: 'dot' } },
             ...(perigee && apogee ? [{
               x: [perigee.height, apogee.height],
               y: [perigee.acceleration.total, apogee.acceleration.total],
