@@ -4,10 +4,9 @@ import { Card, Text, Title, SimpleGrid } from '@mantine/core';
 
 interface LunarPlotsTabProps {
   points: any[];
-  orbit?: any;
 }
 
-export default function LunarPlotsTab({ points, orbit }: LunarPlotsTabProps) {
+export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
   // Prepare data for charts
   const chartData = useMemo(() => {
     return points.map((p, idx) => ({

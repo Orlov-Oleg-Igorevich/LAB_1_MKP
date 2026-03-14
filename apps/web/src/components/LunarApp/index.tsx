@@ -227,7 +227,6 @@ export default function LunarApp() {
           selectedIndex={selectedIndex}
           onSelectedIndexChange={setSelectedIndex}
           orbit={orbit}
-          desktopOpened={desktopOpened}
         />
       </AppShell.Main>
     </AppShell>

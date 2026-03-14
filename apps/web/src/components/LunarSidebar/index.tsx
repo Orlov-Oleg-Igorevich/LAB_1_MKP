@@ -1,5 +1,6 @@
 import { Box, Card, Stack, Text, Select, NumberInput, Divider, Group, Button } from '@mantine/core';
 import type { OrbitalElements } from '@lab/shared';
+import { OrbitalElementTooltips, IntegrationTooltips } from '../LunarMainContent/tabs/HelpTooltips';
 
 interface LunarSidebarProps {
   presets: Array<{ id: number; orbit: OrbitalElements }>;
@@ -38,7 +39,9 @@ export default function LunarSidebar({
     <Box style={{ height: '100%', overflowY: 'auto' }}>
       <Card withBorder>
         <Stack gap="sm">
-          <Text fw={600}>Параметры орбиты ИСЗ</Text>
+          <Group justify="space-between" mb="xs">
+            <Text fw={600}>Параметры орбиты ИСЗ</Text>
+          </Group>
           
           <Select
             label="Пресет (вариант)"
@@ -49,13 +52,23 @@ export default function LunarSidebar({
           />
           
           <NumberInput 
-            label="a, км" 
+            label={
+              <Group gap="xs">
+                <span>a, км</span>
+                {OrbitalElementTooltips.semiMajorAxis}
+              </Group>
+            } 
             value={orbit.a} 
             onChange={(v) => onOrbitChange({ ...orbit, a: Number(v) })} 
           />
           
           <NumberInput
-            label="e"
+            label={
+              <Group gap="xs">
+                <span>e</span>
+                {OrbitalElementTooltips.eccentricity}
+              </Group>
+            }
             value={orbit.e}
             min={0}
             max={0.999999}
@@ -64,35 +77,63 @@ export default function LunarSidebar({
           />
           
           <NumberInput 
-            label="i, град" 
+            label={
+              <Group gap="xs">
+                <span>i, град</span>
+                {OrbitalElementTooltips.inclination}
+              </Group>
+            } 
             value={orbit.i} 
             onChange={(v) => onOrbitChange({ ...orbit, i: Number(v) })} 
           />
           
           <NumberInput
-            label="Ω, град"
+            label={
+              <Group gap="xs">
+                <span>Ω, град</span>
+                {OrbitalElementTooltips.raan}
+              </Group>
+            }
             value={orbit.Omega}
             onChange={(v) => onOrbitChange({ ...orbit, Omega: Number(v) })}
           />
           
           <NumberInput
-            label="ω, град"
+            label={
+              <Group gap="xs">
+                <span>ω, град</span>
+                {OrbitalElementTooltips.argOfPerigee}
+              </Group>
+            }
             value={orbit.omega}
             onChange={(v) => onOrbitChange({ ...orbit, omega: Number(v) })}
           />
           
           <NumberInput 
-            label="M, град" 
+            label={
+              <Group gap="xs">
+                <span>M, град</span>
+                {OrbitalElementTooltips.meanAnomaly}
+              </Group>
+            } 
             value={orbit.M} 
             onChange={(v) => onOrbitChange({ ...orbit, M: Number(v) })} 
           />
 
           <Divider />
           
-          <Text fw={600}>Опции расчёта</Text>
+          <Group justify="space-between" mb="xs">
+            <Text fw={600}>Опции расчёта</Text>
+            {IntegrationTooltips.pointsCount}
+          </Group>
           
           <NumberInput
-            label="Точек по орбите"
+            label={
+              <Group gap="xs">
+                <span>Точек по орбите</span>
+                {IntegrationTooltips.pointsCount}
+              </Group>
+            }
             value={pointsCount}
             min={3}
             max={5000}

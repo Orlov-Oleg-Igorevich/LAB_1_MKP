@@ -6,8 +6,6 @@ import { Slider } from '@mantine/core';
 
 interface LunarOrbit3DProps {
   points: any[];
-  orbit?: any;
-  desktopOpened?: boolean;
 }
 
 // ============================================================================
@@ -319,7 +317,7 @@ const OrbitScene = ({ points, scale, earthRadius, showMoon, showVectors, selecte
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
-export default function LunarOrbit3D({ points, orbit, desktopOpened }: LunarOrbit3DProps) {
+export default function LunarOrbit3D({ points }: LunarOrbit3DProps) {
   const [showMoon, setShowMoon] = useState(true);
   const [showVectors, setShowVectors] = useState(false);
   const [selectedPointIndex, setSelectedPointIndex] = useState(0);
