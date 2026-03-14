@@ -1,5 +1,5 @@
 import { Box, Tabs } from '@mantine/core';
-import { useMemo, useRef, useEffect, useCallback, useState } from 'react';
+import { useMemo, useRef, useEffect, useCallback } from 'react';
 import type { CalculationResponse, OrbitalElements } from '@lab/shared';
 import HeightTab from './tabs/HeightTab.tsx';
 import AnomalyTab from './tabs/AnomalyTab.tsx';

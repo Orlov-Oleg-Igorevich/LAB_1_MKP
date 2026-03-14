@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { AppShell, Group, Title, Button, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import axios from 'axios';
-import type { CalculationResponse, OrbitalElements } from '@lab/shared';
-import Sidebar from '../Sidebar';
-import MainContent from '../MainContent';
+import type { OrbitalElements } from '@lab/shared';
+import LunarSidebar from '../LunarSidebar';
+import LunarMainContent from '../LunarMainContent';
 import { API_BASE } from '../../utils/constants';
 
 type Preset = { id: number; orbit: OrbitalElements };
 
-export default function App() {
+export default function LunarApp() {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -25,13 +25,8 @@ export default function App() {
   });
 
   const [pointsCount, setPointsCount] = useState<number>(200);
-  const [maxN, setMaxN] = useState<number>(4);
-  const [maxK, setMaxK] = useState<number>(3);
-  const [includeJ2Only, setIncludeJ2Only] = useState<boolean>(true);
-  const [coordinateSystem, setCoordinateSystem] = useState<'ECI' | 'ECEF'>('ECEF');
-  const [tSeconds, setTSeconds] = useState<number>(0);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CalculationResponse | null>(null);
+  const [result, setResult] = useState<any | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,15 +51,17 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const r = await axios.post<CalculationResponse>(`${API_BASE}/calculate`, {
+      const r = await axios.post(`${API_BASE}/lunar/calculate`, {
         orbit,
+        moon: {
+          i: 5.145,
+          e: 0.0549,
+          a: 384399,
+          Omega: 30,
+          u: 5,
+        },
         options: {
           pointsCount,
-          maxHarmonicN: maxN,
-          maxHarmonicK: maxK,
-          includeJ2Only,
-          coordinateSystem,
-          tSeconds,
         },
       });
       setResult(r.data);
@@ -76,48 +73,73 @@ export default function App() {
   }
 
   async function exportCsv() {
-    setError(null);
+    if (!result) return;
     try {
-      const r = await axios.post(
-        `${API_BASE}/export/csv`,
-        {
-          orbit,
-          options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
+      const response = await axios.post(`${API_BASE}/export/lunar-csv`, {
+        orbit,
+        moon: {
+          i: 5.145,
+          e: 0.0549,
+          a: 384399,
+          Omega: 30,
+          u: 5,
         },
-        { responseType: 'blob' },
-      );
-      downloadBlob(r.data, 'report.csv');
+        options: {
+          pointsCount,
+        },
+      }, {
+        responseType: 'blob',
+      });
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'lunar_perturbation_report.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? e?.message ?? 'CSV export failed');
+      console.error('CSV Export Error:', e);
+      alert('Failed to export CSV: ' + (e?.message ?? 'Unknown error'));
     }
   }
 
   async function exportPdf() {
-    setError(null);
+    if (!result) return;
     try {
-      const r = await axios.post(
-        `${API_BASE}/export/pdf`,
-        {
-          orbit,
-          options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
+      const response = await axios.post(`${API_BASE}/export/lunar-pdf`, {
+        orbit,
+        moon: {
+          i: 5.145,
+          e: 0.0549,
+          a: 384399,
+          Omega: 30,
+          u: 5,
         },
-        { responseType: 'blob' },
-      );
-      downloadBlob(r.data, 'report.pdf');
+        options: {
+          pointsCount,
+        },
+      }, {
+        responseType: 'blob',
+      });
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'lunar_perturbation_report.pdf');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? e?.message ?? 'PDF export failed');
+      console.error('PDF Export Error:', e);
+      alert('Failed to export PDF: ' + (e?.message ?? 'Unknown error'));
     }
-  }
-
-  function downloadBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
   }
 
   return (
@@ -157,19 +179,17 @@ export default function App() {
                 minWidth: 0,
               }}
             >
-              ЛР1 МКП — Возмущающее ускорение (геопотенциал)
+              ЛР2 — Лунные возмущения
             </Title>
           </Group>
           <Group gap="sm" style={{ flexShrink: 0 }}>
             <Button
               variant="default"
               component="a"
-              href={`${API_BASE}/docs`}
-              target="_blank"
-              rel="noreferrer"
+              href="/"
               size="compact-sm"
             >
-              Swagger
+              На главную
             </Button>
             <Button 
               loading={loading} 
@@ -184,7 +204,7 @@ export default function App() {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        <Sidebar
+        <LunarSidebar
           presets={presets}
           presetId={presetId}
           onPresetIdChange={setPresetId}
@@ -192,16 +212,6 @@ export default function App() {
           onOrbitChange={setOrbit}
           pointsCount={pointsCount}
           onPointsCountChange={setPointsCount}
-          maxN={maxN}
-          onMaxNChange={setMaxN}
-          maxK={maxK}
-          onMaxKChange={setMaxK}
-          includeJ2Only={includeJ2Only}
-          onIncludeJ2OnlyChange={setIncludeJ2Only}
-          coordinateSystem={coordinateSystem}
-          onCoordinateSystemChange={setCoordinateSystem}
-          tSeconds={tSeconds}
-          onTSecondsChange={setTSeconds}
           loading={loading}
           error={error}
           result={result}
@@ -212,11 +222,10 @@ export default function App() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <MainContent
+        <LunarMainContent
           result={result}
           selectedIndex={selectedIndex}
           onSelectedIndexChange={setSelectedIndex}
-          coordinateSystem={coordinateSystem}
           orbit={orbit}
           desktopOpened={desktopOpened}
         />

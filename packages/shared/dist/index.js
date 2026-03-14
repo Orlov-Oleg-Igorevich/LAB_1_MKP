@@ -23,6 +23,7 @@ __export(index_exports, {
   CalculationOptionsSchema: () => CalculationOptionsSchema,
   CalculationRequestSchema: () => CalculationRequestSchema,
   GEOPOTENTIAL_CONSTANTS: () => GEOPOTENTIAL_CONSTANTS,
+  LUNAR_CONSTANTS: () => LUNAR_CONSTANTS,
   OrbitalElementsSchema: () => OrbitalElementsSchema,
   PHYSICS_CONSTANTS: () => PHYSICS_CONSTANTS,
   clamp: () => clamp,
@@ -106,14 +107,30 @@ var GEOPOTENTIAL_CONSTANTS = {
 
 // src/constants/physics.ts
 var PHYSICS_CONSTANTS = {
-  /** km^3 / s^2 */
+  /** km^3 / s^2 (геоцентрическая гравитационная
+   * постоянная с учётом атмосферы)*/
   mu: 398600.4418,
-  /** km (equatorial radius) */
+  /** km (экваториальный радиус) */
   r0: 6378.137,
-  /** rad/s */
+  /** rad/s (угловая скорость вращения земли)*/
   omegaE: 7292115e-11,
-  /** rad (0.001 deg) */
+  /** rad (0.001 deg)(малая постоянная для численного
+   * метода решения уравнения Кеплера) */
   epsilon: 1e-3 * Math.PI / 180
+};
+var LUNAR_CONSTANTS = {
+  /** km^3 / s^2 (гравитационный параметр Луны) */
+  mu: 4902.8,
+  /** km (большая полуось орбиты Луны) */
+  a: 384399,
+  /** эксцентриситет орбиты Луны */
+  e: 0.0549,
+  /** наклонение орбиты Луны к эклиптике, град */
+  i: 5.145,
+  /** высота в апогее, км */
+  apogee: 405696,
+  /** высота в перигее, км */
+  perigee: 363104
 };
 
 // src/utils/math.utils.ts
@@ -157,6 +174,7 @@ var CalculationRequestSchema = import_zod.z.object({
   CalculationOptionsSchema,
   CalculationRequestSchema,
   GEOPOTENTIAL_CONSTANTS,
+  LUNAR_CONSTANTS,
   OrbitalElementsSchema,
   PHYSICS_CONSTANTS,
   clamp,

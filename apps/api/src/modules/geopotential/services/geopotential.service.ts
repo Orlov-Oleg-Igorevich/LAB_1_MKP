@@ -5,12 +5,12 @@ import {
   deg2rad,
 } from '@lab/shared';
 import { CalculationRequestDto } from '../dto/calculation.dto';
-import { KeplerService } from './kepler.service';
-import { CoordinatesService } from './coordinates.service';
-import { GeopotentialMathService } from './geopotential-math.service';
+import { KeplerService } from '../../calculation/services/kepler.service';
+import { CoordinatesService } from '../../calculation/services/coordinates.service';
+import { GeopotentialMathService } from '../../calculation/services/geopotential-math.service';
 
 @Injectable()
-export class CalculationService {
+export class GeopotentialService {
   constructor(
     private readonly kepler: KeplerService,
     private readonly coords: CoordinatesService,

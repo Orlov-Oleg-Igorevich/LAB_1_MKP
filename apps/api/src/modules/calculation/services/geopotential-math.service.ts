@@ -9,7 +9,7 @@ export interface HarmonicOptions {
 }
 
 @Injectable()
-export class GeopotentialService {
+export class GeopotentialMathService {
   constructor(private readonly legendre: LegendreService) {}
 
   /**

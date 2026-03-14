@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 /**
- * Constants from the lab handout (page with coefficients).
- * Values are stored already scaled to the actual coefficients:
- * - Jn: given as (value * 1e-6) in the handout
- * - Cnk/Snk: given as (value * 1e-8) in the handout
+ *Константы из материалов лабораторной работы (страница с коэффициентами).
+ * Значения уже приведены к фактическим коэффициентам:
+ * - Jn: в материале указано как (значение * 1e-6)
+ * - Cnk/Snk: в материале указано как (значение * 1e-8)
  */
 declare const GEOPOTENTIAL_CONSTANTS: {
     readonly J: {
@@ -79,14 +79,30 @@ declare const GEOPOTENTIAL_CONSTANTS: {
 type HarmonicKey = `${number},${number}`;
 
 declare const PHYSICS_CONSTANTS: {
-    /** km^3 / s^2 */
+    /** km^3 / s^2 (геоцентрическая гравитационная
+     * постоянная с учётом атмосферы)*/
     readonly mu: 398600.4418;
-    /** km (equatorial radius) */
+    /** km (экваториальный радиус) */
     readonly r0: 6378.137;
-    /** rad/s */
+    /** rad/s (угловая скорость вращения земли)*/
     readonly omegaE: 0.00007292115;
-    /** rad (0.001 deg) */
+    /** rad (0.001 deg)(малая постоянная для численного
+     * метода решения уравнения Кеплера) */
     readonly epsilon: number;
+};
+declare const LUNAR_CONSTANTS: {
+    /** km^3 / s^2 (гравитационный параметр Луны) */
+    readonly mu: 4902.8;
+    /** km (большая полуось орбиты Луны) */
+    readonly a: 384399;
+    /** эксцентриситет орбиты Луны */
+    readonly e: 0.0549;
+    /** наклонение орбиты Луны к эклиптике, град */
+    readonly i: 5.145;
+    /** высота в апогее, км */
+    readonly apogee: 405696;
+    /** высота в перигее, км */
+    readonly perigee: 363104;
 };
 
 type CoordinateSystem = 'ECI' | 'ECEF';
@@ -185,6 +201,109 @@ interface CalculationResponse {
                 Cnk?: number;
                 Snk?: number;
             }[];
+        };
+    };
+    executionTime: number;
+}
+interface LunarOrbitElements {
+    /** Satellite orbital elements */
+    satellite: OrbitalElements;
+    /** Moon orbital elements */
+    moon: {
+        /** Inclination, deg */
+        i: number;
+        /** Eccentricity */
+        e: number;
+        /** Semi-major axis, km */
+        a: number;
+        /** RAAN, deg */
+        Omega: number;
+        /** Argument of latitude, deg */
+        u: number;
+    };
+}
+interface LunarCalculationOptions {
+    /** Number of points along the orbit. Default: 100 */
+    pointsCount?: number;
+    /** Integration step size, seconds. Default: 60 */
+    stepSize?: number;
+    /** Total integration time, seconds. Default: orbital period */
+    integrationTime?: number;
+}
+interface LunarCalculationRequest {
+    orbit: LunarOrbitElements;
+    options?: LunarCalculationOptions;
+}
+interface LunarOrbitPoint {
+    index: number;
+    /** Time, seconds */
+    t: number;
+    /** Satellite radius, km */
+    r: number;
+    /** Satellite true anomaly, rad */
+    theta: number;
+    /** Argument of latitude, rad */
+    u: number;
+    /** Right ascension, rad */
+    Omega: number;
+    /** Inclination, rad */
+    i: number;
+    /** Eccentricity */
+    e: number;
+    /** Argument of perigee, rad */
+    omega: number;
+    /** Semi-major axis, km */
+    a: number;
+    /** Position ECI */
+    positionECI: Vector3;
+    /** Moon position ECI */
+    moonPositionECI: Vector3;
+    /** Acceleration components in orbital frame */
+    acceleration: {
+        /** Radial (S), m/s² */
+        S: number;
+        /** Transversal (T), m/s² */
+        T: number;
+        /** Binormal (W), m/s² */
+        W: number;
+        /** Total, m/s² */
+        total: number;
+    };
+}
+interface LunarCalculationResponse {
+    success: boolean;
+    data: {
+        points: LunarOrbitPoint[];
+        summary: {
+            minPerturbation: number;
+            maxPerturbation: number;
+            avgPerturbation: number;
+        };
+        constants: {
+            muEarth: number;
+            muMoon: number;
+            moonOrbit: {
+                a: number;
+                e: number;
+                i: number;
+            };
+        };
+        statistics?: {
+            S: {
+                min: number;
+                max: number;
+                avg: number;
+            };
+            T: {
+                min: number;
+                max: number;
+                avg: number;
+            };
+            W: {
+                min: number;
+                max: number;
+                avg: number;
+            };
         };
     };
     executionTime: number;
@@ -320,4 +439,4 @@ declare const CalculationRequestSchema: z.ZodObject<{
     } | undefined;
 }>;
 
-export { type CalculationOptions, CalculationOptionsSchema, type CalculationRequest, CalculationRequestSchema, type CalculationResponse, type CoordinateSystem, GEOPOTENTIAL_CONSTANTS, type HarmonicKey, type OrbitPoint, type OrbitalElements, OrbitalElementsSchema, PHYSICS_CONSTANTS, type Vector3, clamp, deg2rad, hypot3, rad2deg };
+export { type CalculationOptions, CalculationOptionsSchema, type CalculationRequest, CalculationRequestSchema, type CalculationResponse, type CoordinateSystem, GEOPOTENTIAL_CONSTANTS, type HarmonicKey, LUNAR_CONSTANTS, type LunarCalculationOptions, type LunarCalculationRequest, type LunarCalculationResponse, type LunarOrbitElements, type LunarOrbitPoint, type OrbitPoint, type OrbitalElements, OrbitalElementsSchema, PHYSICS_CONSTANTS, type Vector3, clamp, deg2rad, hypot3, rad2deg };

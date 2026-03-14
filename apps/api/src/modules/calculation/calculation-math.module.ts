@@ -1,20 +1,21 @@
 import { Module } from '@nestjs/common';
-import { CalculationController } from './calculation.controller';
-import { CalculationService } from './services/calculation.service';
 import { KeplerService } from './services/kepler.service';
 import { CoordinatesService } from './services/coordinates.service';
 import { LegendreService } from './services/legendre.service';
 import { GeopotentialMathService } from './services/geopotential-math.service';
 
 @Module({
-  controllers: [CalculationController],
   providers: [
-    CalculationService,
     KeplerService,
     CoordinatesService,
     LegendreService,
     GeopotentialMathService,
   ],
-  exports: [CalculationService],
+  exports: [
+    KeplerService,
+    CoordinatesService,
+    LegendreService,
+    GeopotentialMathService,
+  ],
 })
-export class CalculationModule {}
+export class CalculationMathModule {}

@@ -99,3 +99,99 @@ export interface CalculationResponse {
   executionTime: number;
 }
 
+export interface LunarOrbitElements {
+  /** Satellite orbital elements */
+  satellite: OrbitalElements;
+  /** Moon orbital elements */
+  moon: {
+    /** Inclination, deg */
+    i: number;
+    /** Eccentricity */
+    e: number;
+    /** Semi-major axis, km */
+    a: number;
+    /** RAAN, deg */
+    Omega: number;
+    /** Argument of latitude, deg */
+    u: number;
+  };
+}
+
+export interface LunarCalculationOptions {
+  /** Number of points along the orbit. Default: 100 */
+  pointsCount?: number;
+  /** Integration step size, seconds. Default: 60 */
+  stepSize?: number;
+  /** Total integration time, seconds. Default: orbital period */
+  integrationTime?: number;
+}
+
+export interface LunarCalculationRequest {
+  orbit: LunarOrbitElements;
+  options?: LunarCalculationOptions;
+}
+
+export interface LunarOrbitPoint {
+  index: number;
+  /** Time, seconds */
+  t: number;
+  /** Satellite radius, km */
+  r: number;
+  /** Satellite true anomaly, rad */
+  theta: number;
+  /** Argument of latitude, rad */
+  u: number;
+  /** Right ascension, rad */
+  Omega: number;
+  /** Inclination, rad */
+  i: number;
+  /** Eccentricity */
+  e: number;
+  /** Argument of perigee, rad */
+  omega: number;
+  /** Semi-major axis, km */
+  a: number;
+  /** Position ECI */
+  positionECI: Vector3;
+  /** Moon position ECI */
+  moonPositionECI: Vector3;
+  /** Acceleration components in orbital frame */
+  acceleration: {
+    /** Radial (S), m/s² */
+    S: number;
+    /** Transversal (T), m/s² */
+    T: number;
+    /** Binormal (W), m/s² */
+    W: number;
+    /** Total, m/s² */
+    total: number;
+  };
+}
+
+export interface LunarCalculationResponse {
+  success: boolean;
+  data: {
+    points: LunarOrbitPoint[];
+    summary: {
+      minPerturbation: number;
+      maxPerturbation: number;
+      avgPerturbation: number;
+    };
+    constants: {
+      muEarth: number;
+      muMoon: number;
+      moonOrbit: {
+        a: number;
+        e: number;
+        i: number;
+      };
+    };
+    statistics?: {
+      S: { min: number; max: number; avg: number };
+      T: { min: number; max: number; avg: number };
+      W: { min: number; max: number; avg: number };
+    };
+  };
+  executionTime: number;
+}
+

@@ -17,9 +17,11 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Geopotential perturbation API')
-    .setDescription('MAI 604 Lab 1: non-central Earth gravity perturbations')
-    .setVersion('0.1.0')
+    .setTitle('Space Perturbations Research API')
+    .setDescription(
+      'MAI Lab: Non-central gravity field and lunar perturbation research',
+    )
+    .setVersion('0.2.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

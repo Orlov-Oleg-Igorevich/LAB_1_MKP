@@ -17,7 +17,6 @@ export default function HeightTab({ points, perigee, apogee, coordinateSystem, o
   const Svals = points.map((p) => p.acceleration.S);
   const Tvals = points.map((p) => p.acceleration.T);
   const Wvals = points.map((p) => p.acceleration.W);
-  const newton = points.map((p) => p.newtonAcceleration);
 
   // Callback ref to get the underlying div element from Plot component
   const handlePlot1Ref = useCallback((node: any) => {
