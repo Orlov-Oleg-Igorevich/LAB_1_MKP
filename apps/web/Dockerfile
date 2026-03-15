@@ -16,6 +16,9 @@ RUN npm ci
 FROM node:22-alpine AS build
 WORKDIR /app
 
+# Увеличиваем лимит памяти для Node.js (необходимо для Vite)
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 # Копируем установленные зависимости из предыдущего этапа
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
