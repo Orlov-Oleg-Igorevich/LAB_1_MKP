@@ -9,8 +9,8 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/shared/package.json packages/shared/package.json
 
-# Устанавливаем все зависимости (включая @lab/shared)
-RUN npm ci --only=production
+# Устанавливаем все зависимости (включая devDependencies для сборки)
+RUN npm ci
 
 # Этап 2: Сборка проекта
 FROM node:22-alpine AS build

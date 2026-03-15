@@ -280,7 +280,7 @@ const OrbitScene = ({
   const currentAccel = currentPoint?.acceleration;
 
   // Smooth animation with interpolation - useFrame is inside Canvas context
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (isAnimating && satelliteGroupRef.current && currentSatPos) {
       // Smooth follow with lerp
       const targetPos = new THREE.Vector3(...currentSatPos);
