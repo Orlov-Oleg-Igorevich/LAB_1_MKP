@@ -1,5 +1,4 @@
 import { Box, Tabs } from '@mantine/core';
-import { useMemo, useRef, useEffect, useCallback } from 'react';
 import type { CalculationResponse, OrbitalElements } from '@lab/shared';
 import HeightTab from './tabs/HeightTab.tsx';
 import AnomalyTab from './tabs/AnomalyTab.tsx';
@@ -12,7 +11,6 @@ interface MainContentProps {
   onSelectedIndexChange: (index: number) => void;
   coordinateSystem: 'ECI' | 'ECEF';
   orbit: OrbitalElements;
-  desktopOpened: boolean;
 }
 
 export default function MainContent({
@@ -21,74 +19,21 @@ export default function MainContent({
   onSelectedIndexChange,
   coordinateSystem,
   orbit,
-  desktopOpened,
 }: MainContentProps) {
   const points = result?.data.points ?? [];
-  const containerRef = useRef<HTMLDivElement>(null);
-  const plotRefs = useRef<{ [key: string]: any }>({});
-  
-  const perigee = useMemo(() => {
-    if (!points.length) return null;
-    return points.reduce((min, p) => (p.height < min.height ? p : min), points[0]);
-  }, [points]);
+  const perigee = result?.data.points && result.data.points.length > 0
+    ? result.data.points.reduce((min, p) => (p.height < min.height ? p : min), result.data.points[0])
+    : null;
 
-  const apogee = useMemo(() => {
-    if (!points.length) return null;
-    return points.reduce((max, p) => (p.height > max.height ? p : max), points[0]);
-  }, [points]);
+  const apogee = result?.data.points && result.data.points.length > 0
+    ? result.data.points.reduce((max, p) => (p.height > max.height ? p : max), result.data.points[0])
+    : null;
 
 
-  
-  // Register a plot instance
-  const registerPlot = useCallback((name: string, plotDiv: HTMLDivElement | null) => {
-    if (plotDiv) {
-      plotRefs.current[name] = plotDiv;
-    } else {
-      delete plotRefs.current[name];
-    }
-  }, []);
 
-  // Resize specific plot by name
-  const resizePlot = useCallback((name: string) => {
-    const plotDiv = plotRefs.current[name];
-    // Only resize if plot div exists and is in DOM
-    if (plotDiv && document.contains(plotDiv) && typeof window !== 'undefined' && (window as any).Plotly) {
-      try {
-        (window as any).Plotly.Plots.resize(plotDiv);
-      } catch (error) {
-        console.warn(`Failed to resize plot ${name}:`, error);
-      }
-    }
-  }, []);
-
-  // Resize plots when sidebar state changes
-  useEffect(() => {
-    console.log(`Sidebar toggle: desktopOpened=${desktopOpened}`);
-    
-    // First resize - quick attempt
-    const timer1 = setTimeout(() => {
-      resizePlot('height-1');
-      resizePlot('height-2');
-      resizePlot('anomaly-1');
-      resizePlot('anomaly-2');
-    }, 50);
-    
-    // Second resize - after animation completes (300ms Mantine + 100ms buffer)
-    const timer2 = setTimeout(() => {
-      resizePlot('height-1');
-      resizePlot('height-2');
-      resizePlot('anomaly-1');
-      resizePlot('anomaly-2');
-    }, 400);
-    
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [desktopOpened, resizePlot]);
 
   return (
-    <Box ref={containerRef} style={{ height: '100%' }}>
+    <Box style={{ height: '100%' }}>
       <Tabs 
         value={selectedIndex === 0 ? "height" : selectedIndex === 1 ? "anomaly" : selectedIndex === 2 ? "orbit3d" : "help"}
         onChange={(value) => {
@@ -97,7 +42,6 @@ export default function MainContent({
           else if (value === "orbit3d") onSelectedIndexChange(2);
           else if (value === "help") onSelectedIndexChange(3);
         }}
-        keepMounted={false}
       >
         <Tabs.List mb="sm">
           <Tabs.Tab value="height">Зависимость от высоты</Tabs.Tab>
@@ -112,7 +56,6 @@ export default function MainContent({
             perigee={perigee}
             apogee={apogee}
             coordinateSystem={coordinateSystem}
-            onPlotRef={registerPlot}
           />
         </Tabs.Panel>
 
@@ -122,7 +65,6 @@ export default function MainContent({
             perigee={perigee}
             apogee={apogee}
             coordinateSystem={coordinateSystem}
-            onPlotRef={registerPlot}
           />
         </Tabs.Panel>
 
@@ -134,7 +76,6 @@ export default function MainContent({
             onSelectedIndexChange={onSelectedIndexChange}
             coordinateSystem={coordinateSystem}
             orbit={orbit}
-            desktopOpened={desktopOpened}
           />
         </Tabs.Panel>
 

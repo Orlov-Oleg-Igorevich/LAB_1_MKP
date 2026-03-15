@@ -39,7 +39,7 @@ export default function GeopotentialApp() {
 
   useEffect(() => {
     axios
-      .get<Preset[]>(`${API_BASE}/presets`)
+      .get<Preset[]>(`${API_BASE}/geopotential/presets`)
       .then((r) => {
         setPresets(r.data);
         const p1 = r.data.find((p) => p.id === 1);
@@ -227,7 +227,6 @@ export default function GeopotentialApp() {
           onSelectedIndexChange={setSelectedIndex}
           coordinateSystem={coordinateSystem}
           orbit={orbit}
-          desktopOpened={desktopOpened}
         />
       </AppShell.Main>
     </AppShell>

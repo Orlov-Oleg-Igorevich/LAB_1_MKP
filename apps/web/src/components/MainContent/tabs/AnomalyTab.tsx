@@ -1,24 +1,35 @@
 import { Card, Text, SimpleGrid, Group, Box, Badge, Title, Divider } from '@mantine/core';
-import Plot from 'react-plotly.js';
-import { useCallback, useMemo } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useMemo } from 'react';
 import type { OrbitPoint } from '@lab/shared';
-import { IconChartArea, IconSphere, IconTarget } from '@tabler/icons-react';
+import { IconChartArea, IconTarget } from '@tabler/icons-react';
 
 interface AnomalyTabProps {
   points: OrbitPoint[];
   perigee: OrbitPoint | null;
   apogee: OrbitPoint | null;
   coordinateSystem: 'ECI' | 'ECEF';
-  onPlotRef?: (name: string, ref: any) => void;
 }
 
-export default function AnomalyTab({ points, perigee, apogee, coordinateSystem, onPlotRef }: AnomalyTabProps) {
-  const heights = points.map((p) => p.height);
+export default function AnomalyTab({ points, coordinateSystem }: AnomalyTabProps) {
+  // const heights = points.map((p) => p.height);
   const total = points.map((p) => p.acceleration.total);
   const Svals = points.map((p) => p.acceleration.S);
   const Tvals = points.map((p) => p.acceleration.T);
   const Wvals = points.map((p) => p.acceleration.W);
   const thetaDeg = points.map((p) => (p.theta * 180) / Math.PI);
+
+  // Prepare chart data for acceleration vs true anomaly
+  const anomalyChartData = useMemo(() => {
+    return points.map((p, idx) => ({
+      theta_deg: thetaDeg[idx],
+      height: p.height,
+      S: p.acceleration.S,
+      T: p.acceleration.T,
+      W: p.acceleration.W,
+      total: p.acceleration.total,
+    }));
+  }, [points, thetaDeg]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -50,18 +61,7 @@ export default function AnomalyTab({ points, perigee, apogee, coordinateSystem, 
     return components.reduce((max, curr) => curr.rms > max.rms ? curr : max);
   }, [stats]);
 
-  // Callback ref to get the underlying div element from Plot component
-  const handlePlot1Ref = useCallback((node: any) => {
-    if (node && node.el) {
-      onPlotRef?.('anomaly-1', node.el);
-    }
-  }, [onPlotRef]);
 
-  const handlePlot2Ref = useCallback((node: any) => {
-    if (node && node.el) {
-      onPlotRef?.('anomaly-2', node.el);
-    }
-  }, [onPlotRef]);
 
   const formatExp = (num: number) => {
     const absNum = Math.abs(num);
@@ -81,6 +81,46 @@ export default function AnomalyTab({ points, perigee, apogee, coordinateSystem, 
     if (value > 0) return '#ff6b6b';
     if (value < 0) return '#4dabf7';
     return '#868e96';
+  };
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <Card 
+          p="sm" 
+          style={{
+            background: 'rgba(10, 14, 23, 0.95)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+            fontSize: '12px',
+          }}
+        >
+          <Text fw={700} mb="xs" style={{ color: '#667eea' }}>
+            Истинная аномалия: {Number(label).toFixed(1)}°
+          </Text>
+          {payload.map((entry: any, index: number) => (
+            <Group key={index} gap="xs" mb="xs">
+              <div 
+                style={{ 
+                  width: '10px', 
+                  height: '10px', 
+                  borderRadius: '50%', 
+                  background: entry.color 
+                }} 
+              />
+              <Text span c="gray.3">{entry.name}:</Text>
+              <Text span fw={700} style={{ fontFamily: "'JetBrains Mono', monospace", color: entry.color }}>
+                {typeof entry.value === 'number' ? entry.value.toExponential(4) : entry.value}
+              </Text>
+            </Group>
+          ))}
+        </Card>
+      );
+    }
+    return null;
   };
 
   if (!points || points.length === 0) {
@@ -355,138 +395,76 @@ export default function AnomalyTab({ points, perigee, apogee, coordinateSystem, 
           <Text span fw={700} c="#667eea">{coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}</Text>
         </Text>
         
-        <Plot
-          ref={handlePlot1Ref}
-          data={[
-            { x: thetaDeg, y: Svals, type: 'scatter', mode: 'lines', name: 'S(θ)', line: { color: '#ff6b6b', width: 2.5 } },
-            { x: thetaDeg, y: Tvals, type: 'scatter', mode: 'lines', name: 'T(θ)', line: { color: '#4dabf7', width: 2.5 } },
-            { x: thetaDeg, y: Wvals, type: 'scatter', mode: 'lines', name: 'W(θ)', line: { color: '#69db7c', width: 2.5 } },
-            {
-              x: thetaDeg,
-              y: total,
-              type: 'scatter',
-              mode: 'lines',
-              name: '|j(θ)|',
-              line: { color: '#ffd43b', width: 3 },
-            },
-            ...(perigee && apogee ? [{
-              x: [(perigee.theta * 180) / Math.PI, (apogee.theta * 180) / Math.PI],
-              y: [perigee.acceleration.total, apogee.acceleration.total],
-              mode: 'text+markers' as const,
-              type: 'scatter' as const,
-              name: 'Перицентр / Апоцентр',
-              text: ['Перицентр', 'Апоцентр'],
-              textposition: 'top center' as const,
-              marker: { color: ['#ff6b6b', '#4dabf7'], size: 10 },
-              showlegend: true,
-            }] : []),
-          ]}
-          layout={{
-            autosize: true,
-            height: Math.max(320, window.innerHeight * 0.3),
-            margin: { l: 50, r: 10, t: 10, b: 40 },
-            xaxis: { title: { text: 'θ, град' }, gridcolor: 'rgba(255,255,255,0.1)' },
-            yaxis: { title: { text: 'ускорение, м/с²' }, gridcolor: 'rgba(255,255,255,0.1)' },
-            legend: { orientation: 'h', bgcolor: 'rgba(0,0,0,0.3)' },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: '#888' },
-          }}
-          style={{ width: '100%' }}
-          config={{ responsive: true, displayModeBar: false }}
-        />
+        <ResponsiveContainer width="100%" height={Math.max(320, window.innerHeight * 0.3)}>
+          <LineChart data={anomalyChartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+            <XAxis
+              dataKey="theta_deg"
+              label={{ value: 'θ, град', position: 'insideBottom', offset: -5, fill: '#888' }}
+              tick={{ fill: '#888', fontSize: 12 }}
+              tickFormatter={(val: number) => val.toFixed(0)}
+            />
+            <YAxis
+              label={{ value: 'ускорение, м/с²', angle: -90, position: 'insideLeft', fill: '#888' }}
+              tick={{ fill: '#888', fontSize: 12 }}
+              tickFormatter={(val: number) => val.toExponential(1)}
+            />
+            <Tooltip 
+              content={<CustomTooltip />}
+              cursor={{ stroke: 'rgba(255, 255, 255, 0.5)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+            />
+            <Legend 
+              wrapperStyle={{ 
+                paddingTop: '16px',
+                fontSize: '13px',
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="S"
+              stroke="#ff6b6b"
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 6, strokeWidth: 0 }}
+              name="S (радиальная)"
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="T"
+              stroke="#4dabf7"
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 6, strokeWidth: 0 }}
+              name="T (трансверсальная)"
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="W"
+              stroke="#69db7c"
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 6, strokeWidth: 0 }}
+              name="W (бинормальная)"
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="total"
+              stroke="#ffd43b"
+              strokeWidth={3}
+              dot={false}
+              activeDot={{ r: 6, strokeWidth: 0 }}
+              name="|j| (полное)"
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </Card>
-
-      {/* 3D Trajectory Plot Card */}
-      <Card
-        style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '16px',
-          padding: '24px',
-        }}
-      >
-        <Group gap="sm" mb="lg">
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #4dabf7 0%, #339af0 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <IconSphere size={20} color="white" />
-          </div>
-          <Title order={4} style={{ fontSize: '18px' }}>
-            Траектория в координатах (θ, h, |j|)
-          </Title>
-        </Group>
-        
-        <Text size="sm" c="gray.4" mb="md" lh={1.6}>
-          Объединяет зависимость по высоте и по положению на орбите: наглядная линия, окрашенная по
-          величине |j|. Расчёт выполнен в системе координат:{' '}
-          <Text span fw={700} c="#667eea">{coordinateSystem === 'ECEF' ? 'ГСК (ECEF)' : 'АГЭСК (ECI)'}</Text>
-        </Text>
-        
-        <Plot
-          ref={handlePlot2Ref}
-          data={[
-            {
-              x: thetaDeg,
-              y: heights,
-              z: total,
-              type: 'scatter3d',
-              mode: 'lines+markers',
-              name: '|j|',
-              marker: {
-                color: total,
-                colorscale: 'Viridis',
-                showscale: true,
-                size: 2,
-                colorbar: { 
-                  title: '|j|, м/с²',
-                  tickfont: { color: '#888' },
-                  titlefont: { color: '#888' },
-                },
-              },
-              line: {
-                color: total,
-                colorscale: 'Viridis',
-                width: 4,
-              },
-            } as any,
-          ]}
-          layout={{
-            autosize: true,
-            height: Math.max(420, window.innerHeight * 0.4),
-            margin: { l: 0, r: 0, t: 10, b: 0 },
-            scene: {
-              xaxis: { 
-                title: { text: 'θ, град' },
-                gridcolor: 'rgba(255,255,255,0.1)',
-                tickfont: { color: '#888' },
-              },
-              yaxis: { 
-                title: { text: 'h, км' },
-                gridcolor: 'rgba(255,255,255,0.1)',
-                tickfont: { color: '#888' },
-              },
-              zaxis: { 
-                title: { text: '|j|, м/с²' },
-                gridcolor: 'rgba(255,255,255,0.1)',
-                tickfont: { color: '#888' },
-              },
-              bgcolor: 'rgba(0,0,0,0)',
-            },
-          }}
-          style={{ width: '100%' }}
-          config={{ responsive: true, displayModeBar: false }}
-        />
-      </Card>
+      
+      {/* Note: 3D trajectory plot removed - Recharts doesn't support 3D plots */}
+      {/* For 3D visualization, please use the 3D Orbit tab */}
 
       {/* Methodology Section */}
       <Card
