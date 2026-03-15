@@ -1,5 +1,9 @@
 import { Box, Card, Stack, Text, Select, NumberInput, Divider, Group, Button, Switch } from '@mantine/core';
 import type { CalculationResponse, OrbitalElements } from '@lab/shared';
+import {
+  OrbitalElementTooltips,
+  CalculationTooltips,
+} from '../MainContent/tabs/GeopotentialTooltips';
 
 interface SidebarProps {
   presets: Array<{ id: number; orbit: OrbitalElements }>;
@@ -72,13 +76,23 @@ export default function Sidebar({
           />
           
           <NumberInput 
-            label="a, км" 
+            label={
+              <Group gap="xs">
+                <span>a, км</span>
+                {OrbitalElementTooltips.semiMajorAxis}
+              </Group>
+            } 
             value={orbit.a} 
             onChange={(v) => onOrbitChange({ ...orbit, a: Number(v) })} 
           />
           
           <NumberInput
-            label="e"
+            label={
+              <Group gap="xs">
+                <span>e</span>
+                {OrbitalElementTooltips.eccentricity}
+              </Group>
+            }
             value={orbit.e}
             min={0}
             max={0.999999}
@@ -87,25 +101,45 @@ export default function Sidebar({
           />
           
           <NumberInput 
-            label="i, град" 
+            label={
+              <Group gap="xs">
+                <span>i, град</span>
+                {OrbitalElementTooltips.inclination}
+              </Group>
+            } 
             value={orbit.i} 
             onChange={(v) => onOrbitChange({ ...orbit, i: Number(v) })} 
           />
           
           <NumberInput
-            label="Ω, град"
+            label={
+              <Group gap="xs">
+                <span>Ω, град</span>
+                {OrbitalElementTooltips.raan}
+              </Group>
+            }
             value={orbit.Omega}
             onChange={(v) => onOrbitChange({ ...orbit, Omega: Number(v) })}
           />
           
           <NumberInput
-            label="ω, град"
+            label={
+              <Group gap="xs">
+                <span>ω, град</span>
+                {OrbitalElementTooltips.argOfPerigee}
+              </Group>
+            }
             value={orbit.omega}
             onChange={(v) => onOrbitChange({ ...orbit, omega: Number(v) })}
           />
           
           <NumberInput 
-            label="M, град" 
+            label={
+              <Group gap="xs">
+                <span>M, град</span>
+                {OrbitalElementTooltips.meanAnomaly}
+              </Group>
+            } 
             value={orbit.M} 
             onChange={(v) => onOrbitChange({ ...orbit, M: Number(v) })} 
           />
@@ -115,7 +149,12 @@ export default function Sidebar({
           <Text fw={600}>Опции расчёта</Text>
           
           <NumberInput
-            label="Точек по орбите"
+            label={
+              <Group gap="xs">
+                <span>Точек по орбите</span>
+                {CalculationTooltips.pointsCount}
+              </Group>
+            }
             value={pointsCount}
             min={3}
             max={5000}
@@ -124,14 +163,24 @@ export default function Sidebar({
           
           <Group grow>
             <NumberInput 
-              label="n max" 
+              label={
+                <Group gap="xs">
+                  <span>n max</span>
+                  {CalculationTooltips.maxHarmonicN}
+                </Group>
+              } 
               value={maxN} 
               min={2} 
               max={21} 
               onChange={(v) => onMaxNChange(Number(v))} 
             />
             <NumberInput 
-              label="k max" 
+              label={
+                <Group gap="xs">
+                  <span>k max</span>
+                  {CalculationTooltips.maxHarmonicK}
+                </Group>
+              } 
               value={maxK} 
               min={0} 
               max={21} 
@@ -141,7 +190,12 @@ export default function Sidebar({
           
           <Group grow>
             <Select
-              label="Система координат"
+              label={
+                <Group gap="xs">
+                  <span>Система координат</span>
+                  {CalculationTooltips.coordinateSystem}
+                </Group>
+              }
               data={[
                 { value: 'ECEF', label: 'ГСК (ECEF)' },
                 { value: 'ECI', label: 'АГЭСК (ECI)' },
@@ -165,7 +219,12 @@ export default function Sidebar({
           <Switch
             checked={includeJ2Only}
             onChange={(e) => onIncludeJ2OnlyChange(e.currentTarget.checked)}
-            label="Считать J₂-only для сравнения"
+            label={
+              <Group gap="xs">
+                <span>Считать J₂-only для сравнения</span>
+                {CalculationTooltips.includeJ2Only}
+              </Group>
+            }
           />
 
           <Group justify="space-between">

@@ -4,7 +4,7 @@ import type { CalculationResponse, OrbitalElements } from '@lab/shared';
 import HeightTab from './tabs/HeightTab.tsx';
 import AnomalyTab from './tabs/AnomalyTab.tsx';
 import Orbit3DTab from './tabs/Orbit3DTab.tsx';
-import HelpTab from './tabs/HelpTab.tsx';
+import GeopotentialHelpTab from './tabs/GeopotentialHelpTab.tsx';
 
 interface MainContentProps {
   result: CalculationResponse | null;
@@ -26,7 +26,6 @@ export default function MainContent({
   const points = result?.data.points ?? [];
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRefs = useRef<{ [key: string]: any }>({});
-  const latestSelectedIndex = useRef(selectedIndex);
   
   const perigee = useMemo(() => {
     if (!points.length) return null;
@@ -38,19 +37,13 @@ export default function MainContent({
     return points.reduce((max, p) => (p.height > max.height ? p : max), points[0]);
   }, [points]);
 
-  // Update latest selected index when it changes
-  useEffect(() => {
-    console.log(`selectedIndex changed from ${latestSelectedIndex.current} to ${selectedIndex}`);
-    latestSelectedIndex.current = selectedIndex;
-  }, [selectedIndex]);
+
   
   // Register a plot instance
   const registerPlot = useCallback((name: string, plotDiv: HTMLDivElement | null) => {
     if (plotDiv) {
-      console.log(`Registering plot: ${name}`, plotDiv);
       plotRefs.current[name] = plotDiv;
     } else {
-      console.log(`Unregistering plot: ${name}`);
       delete plotRefs.current[name];
     }
   }, []);
@@ -58,52 +51,37 @@ export default function MainContent({
   // Resize specific plot by name
   const resizePlot = useCallback((name: string) => {
     const plotDiv = plotRefs.current[name];
-    console.log(`Attempting to resize plot ${name}:`, plotDiv);
     // Only resize if plot div exists and is in DOM
     if (plotDiv && document.contains(plotDiv) && typeof window !== 'undefined' && (window as any).Plotly) {
       try {
-        console.log(`Resizing plot ${name} successfully`);
         (window as any).Plotly.Plots.resize(plotDiv);
       } catch (error) {
         console.warn(`Failed to resize plot ${name}:`, error);
       }
-    } else {
-      console.warn(`Cannot resize plot ${name}: plotDiv=${plotDiv}, in DOM=${plotDiv ? document.contains(plotDiv) : false}`);
     }
   }, []);
 
   // Resize plots when sidebar state changes
   useEffect(() => {
-    // Use latest selected index which is always up-to-date
-    const currentSelectedIndex = latestSelectedIndex.current;
-    console.log(`Sidebar toggle: desktopOpened=${desktopOpened}, tab=${currentSelectedIndex}`);
+    console.log(`Sidebar toggle: desktopOpened=${desktopOpened}`);
     
     // First resize - quick attempt
     const timer1 = setTimeout(() => {
-      console.log(`Timer1: Resizing plots for tab ${currentSelectedIndex}`);
-      if (currentSelectedIndex === 0) {
-        resizePlot('height-1');
-        resizePlot('height-2');
-      } else if (currentSelectedIndex === 1) {
-        resizePlot('anomaly-1');
-        resizePlot('anomaly-2');
-      }
+      resizePlot('height-1');
+      resizePlot('height-2');
+      resizePlot('anomaly-1');
+      resizePlot('anomaly-2');
     }, 50);
     
     // Second resize - after animation completes (300ms Mantine + 100ms buffer)
     const timer2 = setTimeout(() => {
-      console.log(`Timer2: Resizing plots for tab ${currentSelectedIndex}`);
-      if (currentSelectedIndex === 0) {
-        resizePlot('height-1');
-        resizePlot('height-2');
-      } else if (currentSelectedIndex === 1) {
-        resizePlot('anomaly-1');
-        resizePlot('anomaly-2');
-      }
+      resizePlot('height-1');
+      resizePlot('height-2');
+      resizePlot('anomaly-1');
+      resizePlot('anomaly-2');
     }, 400);
     
     return () => {
-      console.log('Cleaning up sidebar resize timers');
       clearTimeout(timer1);
       clearTimeout(timer2);
     };
@@ -112,11 +90,12 @@ export default function MainContent({
   return (
     <Box ref={containerRef} style={{ height: '100%' }}>
       <Tabs 
-        value={selectedIndex === 0 ? "height" : selectedIndex === 1 ? "anomaly" : "orbit3d"}
+        value={selectedIndex === 0 ? "height" : selectedIndex === 1 ? "anomaly" : selectedIndex === 2 ? "orbit3d" : "help"}
         onChange={(value) => {
           if (value === "height") onSelectedIndexChange(0);
           else if (value === "anomaly") onSelectedIndexChange(1);
           else if (value === "orbit3d") onSelectedIndexChange(2);
+          else if (value === "help") onSelectedIndexChange(3);
         }}
         keepMounted={false}
       >
@@ -160,7 +139,7 @@ export default function MainContent({
         </Tabs.Panel>
 
         <Tabs.Panel value="help">
-          <HelpTab />
+          <GeopotentialHelpTab />
         </Tabs.Panel>
       </Tabs>
     </Box>

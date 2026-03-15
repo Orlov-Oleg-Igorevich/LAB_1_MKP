@@ -1,20 +1,33 @@
+# Этап 1: Установка зависимостей
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
-# все workspace-пакеты, которые объявлены в root package.json
-COPY apps/web/package.json apps/web/package.json
-COPY apps/api/package.json apps/api/package.json
-COPY packages/shared/package.json packages/shared/package.json
-RUN npm ci
 
+# Копируем корневые файлы package для установки зависимостей workspace
+COPY package.json package-lock.json ./
+
+# Копируем package.json всех workspace-пакетов
+COPY apps/web/package.json apps/web/package.json
+COPY packages/shared/package.json packages/shared/package.json
+
+# Устанавливаем все зависимости (включая @lab/shared)
+RUN npm ci --only=production
+
+# Этап 2: Сборка проекта
 FROM node:22-alpine AS build
 WORKDIR /app
+
+# Копируем установленные зависимости из предыдущего этапа
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/package-lock.json ./package-lock.json
-COPY --from=deps /app/node_modules ./node_modules
+
+# Копируем исходный код shared пакета и собираем его
 COPY packages/shared ./packages/shared
+RUN npm run build -w @lab/shared
+
+# Копируем исходный код web-приложения и собираем
 COPY apps/web ./apps/web
-RUN npm run build -w @lab/shared && npm run build -w @lab/web
+RUN npm run build -w @lab/web
 
 FROM nginx:alpine AS runner
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html

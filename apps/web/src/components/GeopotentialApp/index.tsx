@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppShell, Group, Title, Button, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { CalculationResponse, OrbitalElements } from '@lab/shared';
 import Sidebar from '../Sidebar';
@@ -10,6 +11,7 @@ import { API_BASE } from '../../utils/constants';
 type Preset = { id: number; orbit: OrbitalElements };
 
 export default function GeopotentialApp() {
+  const navigate = useNavigate();
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -160,7 +162,14 @@ export default function GeopotentialApp() {
               ЛР1 МКП — Возмущающее ускорение (геопотенциал)
             </Title>
           </Group>
-          <Group gap="sm" style={{ flexShrink: 0 }}>
+          <Group gap="xs" style={{ flexShrink: 0 }}>
+            <Button
+              variant="default"
+              onClick={() => navigate('/')}
+              size="compact-sm"
+            >
+              ← На главную
+            </Button>
             <Button
               variant="default"
               component="a"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppShell, Group, Title, Button, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { OrbitalElements } from '@lab/shared';
 import LunarSidebar from '../LunarSidebar';
@@ -10,6 +11,7 @@ import { API_BASE } from '../../utils/constants';
 type Preset = { id: number; orbit: OrbitalElements };
 
 export default function LunarApp() {
+  const navigate = useNavigate();
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -185,14 +187,13 @@ export default function LunarApp() {
               ЛР2 — Лунные возмущения
             </Title>
           </Group>
-          <Group gap="sm" style={{ flexShrink: 0 }}>
+          <Group gap="xs" style={{ flexShrink: 0 }}>
             <Button
               variant="default"
-              component="a"
-              href="/"
+              onClick={() => navigate('/')}
               size="compact-sm"
             >
-              На главную
+              ← На главную
             </Button>
             <Button 
               loading={loading} 

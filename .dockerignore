@@ -1,14 +1,51 @@
+# Зависимости
 node_modules
 npm-debug.log
+yarn-error.log
+
+# Логирование
+**/*.log
+
+# Docker файлы (не нужны внутри контекста)
 Dockerfile
 Dockerfile.*
 docker-compose.yml
+.dockerignore
+
+# Git
 .git
 .gitignore
+.github
+.gitlab-ci.yml
+
+# Переменные окружения
 .env
 .env.*
+.env.local
+.env.development
+.env.production
+
+# Результаты сборки
 dist
+build
+.next
+out
+
+# Тесты и покрытие
 coverage
-**/*.log
-**/.DS_Store
+.nyc_output
+*.lcov
+
+# IDE и редакторы
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Временные файлы
+*.tmp
+*.temp
+.cache
 
