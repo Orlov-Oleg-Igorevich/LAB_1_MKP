@@ -34,5 +34,6 @@ RUN npm run build -w @lab/web
 
 FROM nginx:alpine AS runner
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 

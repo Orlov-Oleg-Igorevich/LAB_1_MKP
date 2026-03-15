@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Line, Sphere, Text, Html } from '@react-three/drei';
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import * as THREE from 'three';
 import type { OrbitPoint, Vector3 } from '@lab/shared';
 import classes from './OrbitVisualizer.module.css';
@@ -730,6 +730,37 @@ export default function OrbitVisualizer({
   const [isPlaying, setIsPlaying] = useState(true);
   const [animationDelay, setAnimationDelay] = useState(800);
   const [showComponents, setShowComponents] = useState(false);
+  const [webglError, setWebglError] = useState<string | null>(null);
+
+  // Проверка WebGL при монтировании
+  useEffect(() => {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      
+      if (!gl) {
+        setWebglError('WebGL не поддерживается вашим браузером');
+        console.warn('WebGL not supported');
+        return;
+      }
+      
+      // Проверка контекста на потерю
+      const handleContextLost = (event: Event) => {
+        event.preventDefault();
+        setWebglError('Контекст WebGL потерян. Попробуйте перезагрузить страницу.');
+        console.error('WebGL context lost');
+      };
+      
+      canvas.addEventListener('webglcontextlost', handleContextLost, false);
+      
+      return () => {
+        canvas.removeEventListener('webglcontextlost', handleContextLost);
+      };
+    } catch (error) {
+      setWebglError('Ошибка инициализации WebGL');
+      console.error('WebGL initialization error:', error);
+    }
+  }, []);
 
   const scale = useMemo(() => {
     if (!points.length) return 1 / 10000;
@@ -754,6 +785,20 @@ export default function OrbitVisualizer({
   const handleNext = useCallback(() => onSelect((selectedIndex + 1) % points.length), [selectedIndex, points.length, onSelect]);
   const handleDelayChange = useCallback((delay: number) => setAnimationDelay(delay), []);
   const handleToggleComponents = useCallback(() => setShowComponents(!showComponents), [showComponents]);
+
+  // Если есть ошибка WebGL, показываем сообщение
+  if (webglError) {
+    return (
+      <div className={classes.emptyState}>
+        <div>
+          ⚠️ {webglError}<br />
+          <span className={classes.emptyStateText}>
+            3D визуализация требует поддержки WebGL. Попробуйте другой браузер или обновите драйверы.
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (!points.length) {
     return (

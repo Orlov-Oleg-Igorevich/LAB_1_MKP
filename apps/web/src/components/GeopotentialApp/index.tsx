@@ -81,7 +81,7 @@ export default function GeopotentialApp() {
     setError(null);
     try {
       const r = await axios.post(
-        `${API_BASE}/geopotential/export/csv`,
+        `${API_BASE}/export/csv`,
         {
           orbit,
           options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
@@ -98,7 +98,7 @@ export default function GeopotentialApp() {
     setError(null);
     try {
       const r = await axios.post(
-        `${API_BASE}/geopotential/export/pdf`,
+        `${API_BASE}/export/pdf`,
         {
           orbit,
           options: { pointsCount, maxHarmonicN: maxN, maxHarmonicK: maxK, includeJ2Only, coordinateSystem, tSeconds },
