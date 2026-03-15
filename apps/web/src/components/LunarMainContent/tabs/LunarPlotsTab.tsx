@@ -1,18 +1,22 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Card, Text, Title, SimpleGrid } from '@mantine/core';
+import { Card, Text, Title, SimpleGrid, Group, Box, Badge, SegmentedControl } from '@mantine/core';
+import { IconChartLine } from '@tabler/icons-react';
 
 interface LunarPlotsTabProps {
   points: any[];
 }
 
 export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
+  const [selectedView, setSelectedView] = useState<'all' | 'elements' | 'acceleration' | 'delta'>('all');
+
   // Prepare data for charts
   const chartData = useMemo(() => {
     return points.map((p, idx) => ({
       index: idx,
       time: p.t,
-      u_deg: p.u * (180 / Math.PI), // argument of latitude in degrees
+      time_hours: p.t / 3600,
+      u_deg: p.u * (180 / Math.PI),
       Omega_deg: p.orbitalElements.Omega * (180 / Math.PI),
       i_deg: p.orbitalElements.i * (180 / Math.PI),
       e: p.orbitalElements.e,
@@ -23,12 +27,6 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
       deltaE: p.changes.deltaE,
       deltaOmega_arg: p.changes.deltaOmega_arg,
       deltaP: p.changes.deltaP,
-      // For u-dependency plots (normalize to first point)
-      deltaOmega_u: p.changes.deltaOmega,
-      deltaI_u: p.changes.deltaI,
-      deltaE_u: p.changes.deltaE,
-      deltaOmega_arg_u: p.changes.deltaOmega_arg,
-      deltaP_u: p.changes.deltaP,
       S_ms2: p.acceleration.S,
       T_ms2: p.acceleration.T,
       W_ms2: p.acceleration.W,
@@ -38,9 +36,18 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
 
   if (!points || points.length === 0) {
     return (
-      <Card withBorder>
-        <Text c="dimmed" ta="center">
-          Нажмите "Рассчитать" для получения данных
+      <Card 
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '60px 20px',
+          textAlign: 'center',
+        }}
+      >
+        <Text c="gray.4" size="lg">
+          📊 Нажмите "Рассчитать" для построения графиков
         </Text>
       </Card>
     );
@@ -67,729 +74,809 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
     return num.toFixed(decimals);
   };
 
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <Card 
+          p="sm" 
+          style={{
+            background: 'rgba(10, 14, 23, 0.95)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+            fontSize: '12px',
+          }}
+        >
+          <Text fw={700} mb="xs" style={{ color: '#667eea' }}>
+            Время: {(Number(label) / 3600).toFixed(3)} ч
+          </Text>
+          {payload.map((entry: any, index: number) => (
+            <Group key={index} gap="xs" mb="xs">
+              <div 
+                style={{ 
+                  width: '10px', 
+                  height: '10px', 
+                  borderRadius: '50%', 
+                  background: entry.color 
+                }} 
+              />
+              <Text span c="gray.3">{entry.name}:</Text>
+              <Text span fw={700} style={{ fontFamily: "'JetBrains Mono', monospace", color: entry.color }}>
+                {typeof entry.value === 'number' ? entry.value.toExponential(4) : entry.value}
+              </Text>
+            </Group>
+          ))}
+        </Card>
+      );
+    }
+    return null;
+  };
+
+  // Chart common styles
+  const chartGridStyle = { strokeDasharray: '3 3', stroke: 'rgba(255, 255, 255, 0.1)' };
+
+  // Summary cards data
+  const summaryCards = [
+    {
+      title: 'ΔΩ (узел)',
+      value: totalChanges.deltaOmega,
+      unit: '°',
+      color: totalChanges.deltaOmega > 0 ? '#ff6b6b' : totalChanges.deltaOmega < 0 ? '#51cf66' : '#868e96',
+      gradient: 'linear-gradient(135deg, #63e6be 0%, #38d9a9 100%)',
+    },
+    {
+      title: 'Δi (наклонение)',
+      value: totalChanges.deltaI,
+      unit: '°',
+      color: totalChanges.deltaI > 0 ? '#ff6b6b' : totalChanges.deltaI < 0 ? '#51cf66' : '#868e96',
+      gradient: 'linear-gradient(135deg, #4dabf7 0%, #339af0 100%)',
+    },
+    {
+      title: 'Δe (эксцентриситет)',
+      value: totalChanges.deltaE,
+      unit: '',
+      color: totalChanges.deltaE > 0 ? '#ff6b6b' : totalChanges.deltaE < 0 ? '#51cf66' : '#868e96',
+      gradient: 'linear-gradient(135deg, #ffd43b 0%, #fcc419 100%)',
+    },
+    {
+      title: 'Δω (перицентр)',
+      value: totalChanges.deltaOmega_arg,
+      unit: '°',
+      color: totalChanges.deltaOmega_arg > 0 ? '#ff6b6b' : totalChanges.deltaOmega_arg < 0 ? '#51cf66' : '#868e96',
+      gradient: 'linear-gradient(135deg, #da77f2 0%, #be4bdb 100%)',
+    },
+    {
+      title: 'Δp (фокальный)',
+      value: totalChanges.deltaP,
+      unit: 'км',
+      color: totalChanges.deltaP > 0 ? '#ff6b6b' : totalChanges.deltaP < 0 ? '#51cf66' : '#868e96',
+      gradient: 'linear-gradient(135deg, #ffa94d 0%, #ff922b 100%)',
+    },
+  ];
+
   return (
-    <div>
-      <Title order={3} mb="md">
-        Графики изменения орбитальных элементов
-      </Title>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+      padding: '10px',
+    }}>
+      {/* Header */}
+      <Box>
+        <Title 
+          order={3} 
+          style={{
+            fontSize: 'clamp(24px, 4vw, 32px)',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            marginBottom: '8px',
+          }}
+        >
+          📊 Графики изменения орбитальных элементов
+        </Title>
+        <Text c="gray.4" size="lg">
+          Визуализация эволюции орбитальных параметров под действием лунных возмущений
+        </Text>
+      </Box>
 
-      {/* Summary cards */}
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 5 }} spacing="md" mb="md">
-        <Card withBorder>
-          <Text size="sm" c="dimmed">
-            ΔΩ (узел)
-          </Text>
-          <Text
-            size="lg"
-            fw={600}
-            c={totalChanges.deltaOmega > 0 ? 'red' : totalChanges.deltaOmega < 0 ? 'green' : 'gray'}
-          >
-            {formatNumber(totalChanges.deltaOmega, 6)}°
-          </Text>
-          <Text size="xs" c="dimmed">
-            за {(totalTime / 3600).toFixed(2)} ч
-          </Text>
-        </Card>
+      {/* Control Panel */}
+      <Card
+        style={{
+          background: 'rgba(255, 255, 255, 0.06)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '16px',
+          marginBottom: 'xl',
+        }}
+      >
+        <Group justify="space-between" align="center">
+          <SegmentedControl
+            value={selectedView}
+            onChange={(value) => setSelectedView(value as any)}
+            data={[
+              { label: '📊 Все', value: 'all' },
+              { label: '🔵 Элементы', value: 'elements' },
+              { label: '🔴 Ускорения', value: 'acceleration' },
+              { label: '📉 Изменения', value: 'delta' },
+            ]}
+            style={{
+              background: 'rgba(10, 14, 23, 0.5)',
+              borderRadius: '10px',
+            }}
+          />
+          
+          <Group gap="xs">
+            <Badge variant="light" color="blue" size="sm">
+              ⏱ {(totalTime / 3600).toFixed(2)} ч
+            </Badge>
+            <Badge variant="light" color="violet" size="sm">
+              📈 {points.length} точек
+            </Badge>
+          </Group>
+        </Group>
+      </Card>
 
-        <Card withBorder>
-          <Text size="sm" c="dimmed">
-            Δi (наклонение)
-          </Text>
-          <Text
-            size="lg"
-            fw={600}
-            c={totalChanges.deltaI > 0 ? 'red' : totalChanges.deltaI < 0 ? 'green' : 'gray'}
+      {/* Summary Cards */}
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 5 }} spacing="md" mb="xl">
+        {summaryCards.map((card, index) => (
+          <Card
+            key={index}
+            style={{
+              background: 'rgba(255, 255, 255, 0.06)',
+              backdropFilter: 'blur(12px)',
+              border: `1px solid rgba(255, 255, 255, 0.1)`,
+              borderRadius: '16px',
+              padding: '16px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 12px 48px rgba(102, 126, 234, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+            }}
           >
-            {formatNumber(totalChanges.deltaI, 6)}°
-          </Text>
-          <Text size="xs" c="dimmed">
-            за {(totalTime / 3600).toFixed(2)} ч
-          </Text>
-        </Card>
-
-        <Card withBorder>
-          <Text size="sm" c="dimmed">
-            Δe (эксцентриситет)
-          </Text>
-          <Text
-            size="lg"
-            fw={600}
-            c={totalChanges.deltaE > 0 ? 'red' : totalChanges.deltaE < 0 ? 'green' : 'gray'}
-          >
-            {formatNumber(totalChanges.deltaE, 8)}
-          </Text>
-          <Text size="xs" c="dimmed">
-            за {(totalTime / 3600).toFixed(2)} ч
-          </Text>
-        </Card>
-
-        <Card withBorder>
-          <Text size="sm" c="dimmed">
-            Δω (перицентр)
-          </Text>
-          <Text
-            size="lg"
-            fw={600}
-            c={totalChanges.deltaOmega_arg > 0 ? 'red' : totalChanges.deltaOmega_arg < 0 ? 'green' : 'gray'}
-          >
-            {formatNumber(totalChanges.deltaOmega_arg, 6)}°
-          </Text>
-          <Text size="xs" c="dimmed">
-            за {(totalTime / 3600).toFixed(2)} ч
-          </Text>
-        </Card>
-
-        <Card withBorder>
-          <Text size="sm" c="dimmed">
-            Δp (фокальный)
-          </Text>
-          <Text
-            size="lg"
-            fw={600}
-            c={totalChanges.deltaP > 0 ? 'red' : totalChanges.deltaP < 0 ? 'green' : 'gray'}
-          >
-            {formatNumber(totalChanges.deltaP, 4)} км
-          </Text>
-          <Text size="xs" c="dimmed">
-            за {(totalTime / 3600).toFixed(2)} ч
-          </Text>
-        </Card>
+            {/* Gradient top border */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: card.gradient,
+              }}
+            />
+            
+            <Text size="xs" c="gray.4" mb="xs" fw={600}>
+              {card.title}
+            </Text>
+            <Text
+              size="xl"
+              fw={700}
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 'clamp(18px, 2.5vw, 24px)',
+                color: card.color,
+                letterSpacing: '-0.5px',
+              }}
+            >
+              {formatNumber(card.value, card.unit === '°' ? 6 : card.unit === '' ? 8 : 4)}{card.unit}
+            </Text>
+            <Text size="xs" c="gray.5" mt="xs">
+              за {(totalTime / 3600).toFixed(2)} ч
+            </Text>
+          </Card>
+        ))}
       </SimpleGrid>
 
-      {/* Acceleration plots */}
-      <Card withBorder mt="md">
-        <Title order={4} mb="md">
-          Возмущающие ускорения от притяжения Луны
-        </Title>
-        <Text size="sm" c="dimmed" mb="md">
-          Три составляющие возмущающего ускорения в орбитальной системе координат:
-          S — радиальная, T — трансверсальная, W — бинормальная
-        </Text>
-        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
-          {/* Radial acceleration S */}
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t: number) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'S, м/с²', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(val: number) => val.toExponential(1)}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toExponential(4) + ' м/с²', 'S'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="S_ms2"
-                stroke="#e03131"
-                strokeWidth={2}
-                dot={false}
-                name="S (радиальная)"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Acceleration Plots */}
+      {(selectedView === 'all' || selectedView === 'acceleration') && (
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: 'xl',
+          }}
+        >
+          <Group gap="sm" mb="lg">
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconChartLine size={20} color="white" />
+            </div>
+            <Title order={4} style={{ fontSize: '18px' }}>
+              Возмущающие ускорения от притяжения Луны
+            </Title>
+          </Group>
+          
+          <Text size="sm" c="gray.4" mb="md" lh={1.6}>
+            Три составляющие возмущающего ускорения в орбитальной системе координат:
+            S — радиальная (красный), T — трансверсальная (синий), W — бинормальная (зелёный)
+          </Text>
+          
+          <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
+            {/* Radial acceleration S */}
+            <Box>
+              <Text size="sm" fw={700} c="#ff6b6b" mb="sm">S (радиальная)</Text>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'S, м/с²', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(val: number) => val.toExponential(1)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="S_ms2"
+                    stroke="#ff6b6b"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="S (радиальная)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
 
-          {/* Transverse acceleration T */}
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t: number) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'T, м/с²', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(val: number) => val.toExponential(1)}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toExponential(4) + ' м/с²', 'T'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="T_ms2"
-                stroke="#1971c2"
-                strokeWidth={2}
-                dot={false}
-                name="T (трансверсальная)"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
+            {/* Transverse acceleration T */}
+            <Box>
+              <Text size="sm" fw={700} c="#4dabf7" mb="sm">T (трансверсальная)</Text>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'T, м/с²', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(val: number) => val.toExponential(1)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="T_ms2"
+                    stroke="#4dabf7"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="T (трансверсальная)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
 
-          {/* Normal acceleration W */}
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t: number) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'W, м/с²', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(val: number) => val.toExponential(1)}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toExponential(4) + ' м/с²', 'W'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="W_ms2"
-                stroke="#2b8a3e"
-                strokeWidth={2}
-                dot={false}
-                name="W (бинормальная)"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
+            {/* Normal acceleration W */}
+            <Box>
+              <Text size="sm" fw={700} c="#69db7c" mb="sm">W (бинормальная)</Text>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'W, м/с²', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(val: number) => val.toExponential(1)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="W_ms2"
+                    stroke="#69db7c"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="W (бинормальная)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
 
-          {/* Total acceleration */}
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t: number) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: '|a|, м/с²', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(val: number) => val.toExponential(1)}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toExponential(4) + ' м/с²', '|a|'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="total_ms2"
-                stroke="#f08c00"
-                strokeWidth={2}
-                dot={false}
-                name="|a| (полное)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </SimpleGrid>
-      </Card>
-
-      {/* Charts */}
-      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" mb="md">
-        {/* Ω (Right Ascension) */}
-        <Card withBorder>
-          <Title order={4} mb="md">
-            Долгота восходящего узла Ω(t)
-          </Title>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'Ω, град', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toFixed(6) + '°', 'Ω'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="Omega_deg"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={false}
-                name="Ω (град)"
-              />
-              <ReferenceLine y={firstPoint.orbitalElements.Omega * (180 / Math.PI)} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
+            {/* Total acceleration */}
+            <Box>
+              <Text size="sm" fw={700} c="#ffd43b" mb="sm">|a| (полное)</Text>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: '|a|, м/с²', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(val: number) => val.toExponential(1)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="total_ms2"
+                    stroke="#ffd43b"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="|a| (полное)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </SimpleGrid>
         </Card>
+      )}
 
-        {/* Inclination */}
-        <Card withBorder>
-          <Title order={4} mb="md">
-            Наклонение орбиты i(t)
-          </Title>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'i, град', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toFixed(6) + '°', 'i'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="i_deg"
-                stroke="#82ca9d"
-                strokeWidth={2}
-                dot={false}
-                name="i (град)"
-              />
-              <ReferenceLine y={firstPoint.orbitalElements.i * (180 / Math.PI)} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Orbital Elements Plots */}
+      {(selectedView === 'all' || selectedView === 'elements') && (
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: 'xl',
+          }}
+        >
+          <Group gap="sm" mb="lg">
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #4dabf7 0%, #339af0 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconChartLine size={20} color="white" />
+            </div>
+            <Title order={4} style={{ fontSize: '18px' }}>
+              Элементы орбиты
+            </Title>
+          </Group>
+          
+          <Text size="sm" c="gray.4" mb="md" lh={1.6}>
+            Изменение орбитальных элементов в течение времени интегрирования
+          </Text>
+          
+          <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
+            {/* Right Ascension Ω */}
+            <Box>
+              <Text size="sm" fw={700} c="#8884d8" mb="sm">Ω (долгота восходящего узла)</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'Ω, град', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine 
+                    y={firstPoint.orbitalElements.Omega * (180 / Math.PI)} 
+                    stroke="#888" 
+                    strokeDasharray="3 3" 
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Omega_deg"
+                    stroke="#8884d8"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="Ω (град)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+
+            {/* Inclination i */}
+            <Box>
+              <Text size="sm" fw={700} c="#82ca9d" mb="sm">i (наклонение)</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'i, град', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine 
+                    y={firstPoint.orbitalElements.i * (180 / Math.PI)} 
+                    stroke="#888" 
+                    strokeDasharray="3 3" 
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="i_deg"
+                    stroke="#82ca9d"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="i (град)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+
+            {/* Eccentricity e */}
+            <Box>
+              <Text size="sm" fw={700} c="#ffc658" mb="sm">e (эксцентриситет)</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'e', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine 
+                    y={firstPoint.orbitalElements.e} 
+                    stroke="#888" 
+                    strokeDasharray="3 3" 
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="e"
+                    stroke="#ffc658"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="e"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+
+            {/* Argument of Perigee ω */}
+            <Box>
+              <Text size="sm" fw={700} c="#ff7300" mb="sm">ω (аргумент перицентра)</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'ω, град', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine 
+                    y={firstPoint.orbitalElements.omega * (180 / Math.PI)} 
+                    stroke="#888" 
+                    strokeDasharray="3 3" 
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="omega_deg"
+                    stroke="#ff7300"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="ω (град)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </SimpleGrid>
         </Card>
+      )}
 
-        {/* Eccentricity */}
-        <Card withBorder>
-          <Title order={4} mb="md">
-            Эксцентриситет e(t)
-          </Title>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'e', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toFixed(8), 'e'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="e"
-                stroke="#ffc658"
-                strokeWidth={2}
-                dot={false}
-                name="e"
-              />
-              <ReferenceLine y={firstPoint.orbitalElements.e} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Delta Plots */}
+      {(selectedView === 'all' || selectedView === 'delta') && (
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+          }}
+        >
+          <Group gap="sm" mb="lg">
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconChartLine size={20} color="white" />
+            </div>
+            <Title order={4} style={{ fontSize: '18px' }}>
+              Изменения элементов орбиты (Δ от начального значения)
+            </Title>
+          </Group>
+          
+          <Text size="sm" c="gray.4" mb="md" lh={1.6}>
+            Количественная мера влияния лунных возмущений на орбитальные элементы
+          </Text>
+          
+          <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
+            {/* ΔΩ, Δi, Δω */}
+            <Box>
+              <Text size="sm" fw={700} c="gray.3" mb="sm">Угловые изменения</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'Δ, град', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="deltaOmega"
+                    stroke="#8884d8"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="ΔΩ (град)"
+                    animationDuration={1000}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="deltaI"
+                    stroke="#82ca9d"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="Δi (град)"
+                    animationDuration={1000}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="deltaOmega_arg"
+                    stroke="#ff7300"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="Δω (град)"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+
+            {/* Δe */}
+            <Box>
+              <Text size="sm" fw={700} c="gray.3" mb="sm">Изменение эксцентриситета</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'Δe', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="deltaE"
+                    stroke="#ffc658"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="Δe"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </SimpleGrid>
         </Card>
+      )}
 
-        {/* Argument of Perigee */}
-        <Card withBorder>
-          <Title order={4} mb="md">
-            Аргумент перицентра ω(t)
+      {/* Analysis Section */}
+      <Card
+        mt="xl"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '24px',
+        }}
+      >
+        <Group gap="sm" mb="lg">
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>🔬</span>
+          </div>
+          <Title order={4} style={{ fontSize: '18px' }}>
+            Анализ результатов
           </Title>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'ω, град', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toFixed(6) + '°', 'ω'];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="omega_deg"
-                stroke="#ff7300"
-                strokeWidth={2}
-                dot={false}
-                name="ω (град)"
-              />
-              <ReferenceLine y={firstPoint.orbitalElements.omega * (180 / Math.PI)} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </SimpleGrid>
-
-      {/* Delta plots */}
-      <Card withBorder>
-        <Title order={4} mb="md">
-          Изменения элементов орбиты (Δ от начального значения)
-        </Title>
-        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t: number) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'Δ, град', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value, name) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [
-                    formatNumber(numValue, String(name).includes('Ω') || String(name).includes('i') || String(name).includes('ω') ? 6 : 4) + 
-                    (String(name).includes('Ω') || String(name).includes('i') || String(name).includes('ω') ? '°' : ''),
-                    String(name)
-                  ];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="deltaOmega"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={false}
-                name="ΔΩ (град)"
-              />
-              <Line
-                type="monotone"
-                dataKey="deltaI"
-                stroke="#82ca9d"
-                strokeWidth={2}
-                dot={false}
-                name="Δi (град)"
-              />
-              <Line
-                type="monotone"
-                dataKey="deltaOmega_arg"
-                stroke="#ff7300"
-                strokeWidth={2}
-                dot={false}
-                name="Δω (град)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="time"
-                label={{ value: 'Время, с', position: 'insideBottom', offset: -5 }}
-                tickFormatter={(t: number) => (t / 3600).toFixed(1) + 'ч'}
-              />
-              <YAxis
-                label={{ value: 'Δ', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value, name) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [
-                    formatNumber(numValue, String(name) === 'Δe' ? 8 : 4),
-                    String(name)
-                  ];
-                }}
-                labelFormatter={(label: any) => `Время: ${(Number(label) / 3600).toFixed(3)} ч`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="deltaE"
-                stroke="#ffc658"
-                strokeWidth={2}
-                dot={false}
-                name="Δe"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        </Group>
+        
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          <Box>
+            <Text size="sm" mb="xs" style={{ color: '#8884d8', fontWeight: 600 }}>
+              🔵 Долгота восходящего узла (Ω)
+            </Text>
+            <Text size="sm" c="gray.3" mb="md" lh={1.6}>
+              Изменяется под действием бинормальной составляющей W возмущающего ускорения. 
+              Скорость изменения зависит от аргумента широты u и взаимной ориентации орбит спутника и Луны.
+            </Text>
+            
+            <Text size="sm" mb="xs" style={{ color: '#82ca9d', fontWeight: 600 }}>
+              🟢 Наклонение (i)
+            </Text>
+            <Text size="sm" c="gray.3" mb="md" lh={1.6}>
+              Периодические изменения наклонения также определяются W-составляющей. 
+              Амплитуда изменений зависит от текущего положения спутника на орбите.
+            </Text>
+          </Box>
+          
+          <Box>
+            <Text size="sm" mb="xs" style={{ color: '#ffc658', fontWeight: 600 }}>
+              🟡 Эксцентриситет (e)
+            </Text>
+            <Text size="sm" c="gray.3" mb="md" lh={1.6}>
+              Изменяется под действием радиальной S и трансверсальной T составляющих. 
+              Форма орбиты периодически меняется, что влияет на высоты апогея и перигея.
+            </Text>
+            
+            <Text size="sm" mb="xs" style={{ color: '#ff7300', fontWeight: 600 }}>
+              🟠 Аргумент перицентра (ω)
+            </Text>
+            <Text size="sm" c="gray.3" lh={1.6}>
+              Испыывает наиболее сложные изменения — зависит от всех трёх составляющих (S, T, W). 
+              Вызывает вращение линии апсид в плоскости орбиты.
+            </Text>
+          </Box>
         </SimpleGrid>
-      </Card>
-
-      {/* Plots vs argument of latitude u */}
-      <Card withBorder mt="md">
-        <Title order={4} mb="md">
-          Зависимость изменений от аргумента широты u
-        </Title>
-        <Text size="sm" c="dimmed" mb="md">
-          Аргумент широты u = ω + ϑ характеризует положение спутника на орбите.
-          Возмущения наиболее сильно зависят от этой величины.
-        </Text>
-        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
-          {/* ΔΩ(u), Δi(u), Δω(u) */}
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="u_deg"
-                label={{ value: 'Аргумент широты u, град', position: 'insideBottom', offset: -5 }}
-                domain={[0, 360]}
-                ticks={[0, 90, 180, 270, 360]}
-              />
-              <YAxis
-                label={{ value: 'Δ, град', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value, name) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [
-                    numValue.toFixed(6) + '°',
-                    String(name)
-                  ];
-                }}
-                labelFormatter={(label: any) => `u = ${Number(label).toFixed(1)}°`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="deltaOmega_u"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={false}
-                name="ΔΩ(u)"
-              />
-              <Line
-                type="monotone"
-                dataKey="deltaI_u"
-                stroke="#82ca9d"
-                strokeWidth={2}
-                dot={false}
-                name="Δi(u)"
-              />
-              <Line
-                type="monotone"
-                dataKey="deltaOmega_arg_u"
-                stroke="#ff7300"
-                strokeWidth={2}
-                dot={false}
-                name="Δω(u)"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
-
-          {/* Δe(u), Δp(u) */}
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="u_deg"
-                label={{ value: 'Аргумент широты u, град', position: 'insideBottom', offset: -5 }}
-                domain={[0, 360]}
-                ticks={[0, 90, 180, 270, 360]}
-              />
-              <YAxis
-                label={{ value: 'Δ', angle: -90, position: 'insideLeft' }}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value, name) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [
-                    formatNumber(numValue, String(name) === 'Δe' ? 8 : 4),
-                    String(name)
-                  ];
-                }}
-                labelFormatter={(label: any) => `u = ${Number(label).toFixed(1)}°`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="deltaE_u"
-                stroke="#ffc658"
-                strokeWidth={2}
-                dot={false}
-                name="Δe(u)"
-              />
-              <Line
-                type="monotone"
-                dataKey="deltaP_u"
-                stroke="#008800"
-                strokeWidth={2}
-                dot={false}
-                name="Δp(u), км"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
-        </SimpleGrid>
-      </Card>
-
-      {/* Acceleration vs u plots */}
-      <Card withBorder mt="md">
-        <Title order={4} mb="md">
-          Возмущающие ускорения от аргумента широты
-        </Title>
-        <Text size="sm" c="dimmed" mb="md">
-          Зависимость компонент возмущающего ускорения от положения спутника на орбите
-        </Text>
-        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
-          {/* S(u), T(u) */}
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="u_deg"
-                label={{ value: 'Аргумент широты u, град', position: 'insideBottom', offset: -5 }}
-                domain={[0, 360]}
-                ticks={[0, 90, 180, 270, 360]}
-              />
-              <YAxis
-                label={{ value: 'S, T (м/с²)', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(val: number) => val.toExponential(1)}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value, name) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toExponential(4) + ' м/с²', String(name)];
-                }}
-                labelFormatter={(label: any) => `u = ${Number(label).toFixed(1)}°`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="S_ms2"
-                stroke="#e03131"
-                strokeWidth={2}
-                dot={false}
-                name="S(u) (радиальная)"
-              />
-              <Line
-                type="monotone"
-                dataKey="T_ms2"
-                stroke="#1971c2"
-                strokeWidth={2}
-                dot={false}
-                name="T(u) (трансверсальная)"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
-
-          {/* W(u), total(u) */}
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="u_deg"
-                label={{ value: 'Аргумент широты u, град', position: 'insideBottom', offset: -5 }}
-                domain={[0, 360]}
-                ticks={[0, 90, 180, 270, 360]}
-              />
-              <YAxis
-                label={{ value: '|a|, W (м/с²)', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(val: number) => val.toExponential(1)}
-              />
-              <Tooltip
-                // @ts-ignore - Recharts ValueType includes arrays but we handle only primitive values
-                formatter={(value, name) => {
-                  const numValue = Array.isArray(value) ? 0 : (typeof value === 'number' || typeof value === 'string' ? Number(value) : 0);
-                  return [numValue.toExponential(4) + ' м/с²', String(name)];
-                }}
-                labelFormatter={(label: any) => `u = ${Number(label).toFixed(1)}°`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="W_ms2"
-                stroke="#2b8a3e"
-                strokeWidth={2}
-                dot={false}
-                name="W(u) (бинормальная)"
-              />
-              <Line
-                type="monotone"
-                dataKey="total_ms2"
-                stroke="#f08c00"
-                strokeWidth={2}
-                dot={false}
-                name="|a|(u) (полная)"
-              />
-              <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
-            </LineChart>
-          </ResponsiveContainer>
-        </SimpleGrid>
-      </Card>
-
-      {/* Analysis text */}
-      <Card withBorder mt="md">
-        <Title order={4} mb="md">
-          Анализ результатов
-        </Title>
-        <Text size="sm" mb="xs">
-          На графиках видно, как лунные возмущения влияют на орбитальные элементы спутника в течение одного витка.
-        </Text>
-        <Text size="sm" mb="xs">
-          <strong>Долгота восходящего узла (Ω):</strong> Изменяется под действием бинормальной составляющей W возмущающего ускорения. 
-          Скорость изменения зависит от аргумента широты u.
-        </Text>
-        <Text size="sm" mb="xs">
-          <strong>Наклонение (i):</strong> Также испытывает периодические изменения из-за воздействия W-составляющей. 
-          Амплитуда изменений зависит от взаимной ориентации орбит спутника и Луны.
-        </Text>
-        <Text size="sm" mb="xs">
-          <strong>Эксцентриситет (e):</strong> Изменяется под действием радиальной S и трансверсальной T составляющих. 
-          Форма орбиты периодически меняется.
-        </Text>
-        <Text size="sm">
-          <strong>Аргумент перицентра (ω):</strong> Испыывает наиболее сложные изменения, так как зависит от всех трёх составляющих 
-          возмущающего ускорения (S, T, W).
-        </Text>
       </Card>
     </div>
   );

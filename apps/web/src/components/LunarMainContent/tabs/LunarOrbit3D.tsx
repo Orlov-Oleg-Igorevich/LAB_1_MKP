@@ -75,8 +75,11 @@ const OrbitScene = ({ points, scale, earthRadius, showMoon, showVectors, selecte
     [points, scale]
   );
 
-  // Extract Moon positions (use first point's moon position)
-  const moonPosition = points[0]?.moonPositionECI;
+  // Extract Moon positions (calculate for current time)
+  const moonPosition = useMemo(() => {
+    if (!points.length || selectedPointIndex === undefined) return null;
+    return points[selectedPointIndex]?.moonPositionECI || points[0]?.moonPositionECI;
+  }, [points, selectedPointIndex]);
   
   // Calculate Moon distance for display
   const moonDistance = moonPosition ? Math.sqrt(
@@ -369,18 +372,21 @@ export default function LunarOrbit3D({ points }: LunarOrbit3DProps) {
     };
   }, [points]);
 
-  // Animation loop
+  // Animation loop with proper cleanup
   useMemo(() => {
-    if (isAnimating && points.length > 0) {
-      const interval = setInterval(() => {
-        setSelectedPointIndex((prev) => {
-          const next = prev + Math.max(1, Math.floor(animationSpeed));
-          return next >= points.length ? 0 : next;
-        });
-      }, 50);
-      
-      return () => clearInterval(interval);
-    }
+    if (!isAnimating || points.length === 0) return;
+    
+    const intervalId = setInterval(() => {
+      setSelectedPointIndex((prev) => {
+        const increment = Math.max(1, Math.floor(animationSpeed));
+        const next = prev + increment;
+        return next >= points.length ? 0 : next;
+      });
+    }, 100); // Slower base speed (was 50ms)
+    
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [isAnimating, animationSpeed, points.length]);
 
   if (!points.length) {

@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { IconChartBar, IconAward, IconActivity, IconInfoCircle } from '@tabler/icons-react';
 
 interface LunarStatisticsTabProps {
   points: any[];
@@ -54,9 +55,18 @@ export default function LunarStatisticsTab({ points, orbit }: LunarStatisticsTab
 
   if (!points || points.length === 0 || !stats) {
     return (
-      <Card withBorder>
-        <Text c="dimmed" ta="center">
-          Нажмите "Рассчитать" для получения статистики
+      <Card 
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '60px 20px',
+          textAlign: 'center',
+        }}
+      >
+        <Text c="gray.4" size="lg">
+          📊 Нажмите "Рассчитать" для получения статистики
         </Text>
       </Card>
     );
@@ -99,159 +109,414 @@ export default function LunarStatisticsTab({ points, orbit }: LunarStatisticsTab
   const dominantComponent = getDominantComponent(stats.accelStats);
 
   return (
-    <div>
-      <Title order={3} mb="md">
-        Статистический анализ возмущений
-      </Title>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+      padding: '10px',
+    }}>
+      {/* Header */}
+      <Box mb="xl">
+        <Title 
+          order={3} 
+          style={{
+            fontSize: 'clamp(24px, 4vw, 32px)',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            marginBottom: '8px',
+          }}
+        >
+          📊 Статистический анализ возмущений
+        </Title>
+        <Text c="gray.4" size="lg">
+          Комплексный статистический анализ лунных возмущений и оценка точности интегрирования
+        </Text>
+      </Box>
 
-      {/* Summary cards */}
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md" mb="md">
-        <Card withBorder>
+      {/* Summary Cards */}
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
+        {/* Dominant Component Card */}
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '20px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 12px 48px rgba(102, 126, 234, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+          }}
+        >
           <Group justify="space-between" mb="xs">
-            <Text size="sm" c="dimmed">Доминирующая компонента</Text>
-            <Badge color="red">{dominantComponent}</Badge>
+            <Text size="sm" c="gray.4">Доминирующая компонента</Text>
+            <Badge 
+              size="lg" 
+              variant="gradient"
+              gradient={{ from: '#ff6b6b', to: '#ee5a6f' }}
+              style={{ fontSize: '12px', fontWeight: 600 }}
+            >
+              {dominantComponent}
+            </Badge>
           </Group>
-          <Text size="lg" fw={600}>
+          <Text size="lg" fw={600} c="#ff6b6b">
             {getDominantExplanation(dominantComponent)}
+          </Text>
+          <Text size="xs" c="gray.5" mt="xs">
+            Наибольшее RMS значение
           </Text>
         </Card>
 
-        <Card withBorder>
+        {/* Maximum Acceleration Card */}
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '20px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 12px 48px rgba(255, 169, 77, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+          }}
+        >
           <Group justify="space-between" mb="xs">
-            <Text size="sm" c="dimmed">Максимальное ускорение</Text>
-            <Badge color="orange">|a|max</Badge>
+            <Text size="sm" c="gray.4">Максимальное ускорение</Text>
+            <Badge 
+              size="lg" 
+              variant="gradient"
+              gradient={{ from: '#ffa94d', to: '#ff922b' }}
+              style={{ fontSize: '12px', fontWeight: 600 }}
+            >
+              \|a\|max
+            </Badge>
           </Group>
-          <Text size="lg" fw={600} style={{ fontFamily: 'monospace' }}>
+          <Text 
+            size="lg" 
+            fw={600}
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 'clamp(16px, 2.5vw, 20px)',
+              background: 'linear-gradient(135deg, #ffa94d 0%, #ff922b 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             {formatExp(stats.accelStats.total.max)} м/с²
           </Text>
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="gray.5" mt="xs">
             Отношение к земному: {(stats.accelStats.total.max / 9.81).toExponential(2)}
           </Text>
         </Card>
 
-        <Card withBorder>
+        {/* Average Acceleration Card */}
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '20px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 12px 48px rgba(255, 212, 59, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+          }}
+        >
           <Group justify="space-between" mb="xs">
-            <Text size="sm" c="dimmed">Среднее ускорение</Text>
-            <Badge color="yellow">|a|avg</Badge>
+            <Text size="sm" c="gray.4">Среднее ускорение</Text>
+            <Badge 
+              size="lg" 
+              variant="gradient"
+              gradient={{ from: '#ffd43b', to: '#fcc419' }}
+              style={{ fontSize: '12px', fontWeight: 600 }}
+            >
+              \|a\|avg
+            </Badge>
           </Group>
-          <Text size="lg" fw={600} style={{ fontFamily: 'monospace' }}>
+          <Text 
+            size="lg" 
+            fw={600}
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 'clamp(16px, 2.5vw, 20px)',
+              background: 'linear-gradient(135deg, #ffd43b 0%, #fcc419 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             {formatExp(stats.accelStats.total.mean)} м/с²
           </Text>
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="gray.5" mt="xs">
             Среднеквадратичное: {formatExp(stats.accelStats.total.rms)} м/с²
           </Text>
         </Card>
 
-        <Card withBorder>
+        {/* Trajectory Points Card */}
+        <Card
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '20px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 12px 48px rgba(77, 171, 247, 0.25)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+          }}
+        >
           <Group justify="space-between" mb="xs">
-            <Text size="sm" c="dimmed">Точек траектории</Text>
-            <Badge color="blue">N</Badge>
+            <Text size="sm" c="gray.4">Точек траектории</Text>
+            <Badge 
+              size="lg" 
+              variant="gradient"
+              gradient={{ from: '#4dabf7', to: '#339af0' }}
+              style={{ fontSize: '12px', fontWeight: 600 }}
+            >
+              N
+            </Badge>
           </Group>
-          <Text size="lg" fw={600}>
+          <Text 
+            size="lg" 
+            fw={600}
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 'clamp(16px, 2.5vw, 20px)',
+              background: 'linear-gradient(135deg, #4dabf7 0%, #339af0 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             {points.length}
           </Text>
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="gray.5" mt="xs">
             Диапазон u: [0°, 360°]
           </Text>
         </Card>
       </SimpleGrid>
 
-      {/* Acceleration statistics chart */}
-      <Card withBorder mb="md">
-        <Title order={4} mb="md">
-          Статистика компонент ускорения
-        </Title>
-        <ResponsiveContainer width="100%" height={350}>
+      {/* Acceleration Statistics Chart */}
+      <Card
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '24px',
+        }}
+      >
+        <Group gap="sm" mb="lg">
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconChartBar size={20} color="white" />
+          </div>
+          <Title order={4} style={{ fontSize: '18px' }}>
+            Статистика компонент ускорения
+          </Title>
+        </Group>
+        
+        <Text size="sm" c="gray.4" mb="md" lh={1.6}>
+          Сравнительный анализ статистических характеристик компонент возмущающего ускорения
+        </Text>
+        
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart data={accelChartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="component" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+            <XAxis 
+              dataKey="component" 
+              tick={{ fill: '#888', fontSize: 14 }}
+              tickFormatter={(val) => `${val} (м/с²)`}
+            />
             <YAxis
+              tick={{ fill: '#888', fontSize: 12 }}
               tickFormatter={(val) => val.toExponential(1)}
-              label={{ value: 'м/с²', angle: -90, position: 'insideLeft' }}
+              label={{ value: 'м/с²', angle: -90, position: 'insideLeft', fill: '#888' }}
             />
             <Tooltip
-              formatter={(value: any) => Number(value).toExponential(4)}
-              labelFormatter={(label: any) => `Компонента ${label}`}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <Card 
+                      p="sm"
+                      style={{
+                        background: 'rgba(10, 14, 23, 0.95)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                      }}
+                    >
+                      <Text fw={700} mb="xs" style={{ color: '#667eea' }}>
+                        Компонента {label}
+                      </Text>
+                      {payload.map((entry: any, index: number) => (
+                        <Group key={index} gap="xs" mb="xs">
+                          <div 
+                            style={{ 
+                              width: '10px', 
+                              height: '10px', 
+                              borderRadius: '50%', 
+                              background: entry.color 
+                            }} 
+                          />
+                          <Text span c="gray.3">{entry.name}:</Text>
+                          <Text span fw={700} style={{ fontFamily: "'JetBrains Mono', monospace", color: entry.color }}>
+                            {Number(entry.value).toExponential(4)} м/с²
+                          </Text>
+                        </Group>
+                      ))}
+                    </Card>
+                  );
+                }
+                return null;
+              }}
             />
-            <Legend />
-            <Bar dataKey="min" fill="#ff6b6b" name="Минимум" />
-            <Bar dataKey="max" fill="#51cf66" name="Максимум" />
-            <Bar dataKey="mean" fill="#339af0" name="Среднее" />
-            <Bar dataKey="rms" fill="#ffd43b" name="RMS" />
+            <Legend 
+              wrapperStyle={{ 
+                paddingTop: '16px',
+                fontSize: '13px',
+              }}
+            />
+            <Bar dataKey="min" fill="#ff6b6b" name="Минимум" radius={[4, 4, 0, 0]} animationDuration={1000} />
+            <Bar dataKey="max" fill="#51cf66" name="Максимум" radius={[4, 4, 0, 0]} animationDuration={1000} />
+            <Bar dataKey="mean" fill="#339af0" name="Среднее" radius={[4, 4, 0, 0]} animationDuration={1000} />
+            <Bar dataKey="rms" fill="#ffd43b" name="RMS" radius={[4, 4, 0, 0]} animationDuration={1000} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
-      {/* Variation statistics by orbital element */}
-      <Card withBorder mb="md">
-        <Title order={4} mb="md">
-          Вариация орбитальных элементов
-        </Title>
-        <Text size="sm" c="dimmed" mb="md">
-          Изменения элементов за время интегрирования (возмущения - начальное значение)
+      {/* Variation Statistics */}
+      <Card
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '24px',
+        }}
+      >
+        <Group gap="sm" mb="lg">
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #4dabf7 0%, #339af0 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconActivity size={20} color="white" />
+          </div>
+          <Title order={4} style={{ fontSize: '18px' }}>
+            Вариация орбитальных элементов
+          </Title>
+        </Group>
+        
+        <Text size="sm" c="gray.4" mb="md" lh={1.6}>
+          Изменения элементов за время интегрирования (возмущения − начальное значение)
         </Text>
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
           <Box>
-            <Text fw={600} mb="xs">Δa (большая полуось)</Text>
+            <Text fw={600} mb="xs" c="#ff6b6b">Δa (большая полуось)</Text>
             <ElementVariationBar
               value={stats.elementStats.a.range}
               unit="км"
               mean={stats.elementStats.a.mean}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber(orbit?.a || 0, 2)} км → 
               Изменение: {formatExp(stats.elementStats.a.range)} км
             </Text>
           </Box>
 
           <Box>
-            <Text fw={600} mb="xs">Δe (эксцентриситет)</Text>
+            <Text fw={600} mb="xs" c="#ffd43b">Δe (эксцентриситет)</Text>
             <ElementVariationBar
               value={stats.elementStats.e.range}
               unit=""
               mean={stats.elementStats.e.mean}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber(orbit?.e || 0, 6)} → 
               Изменение: {formatExp(stats.elementStats.e.range)}
             </Text>
           </Box>
 
           <Box>
-            <Text fw={600} mb="xs">Δi (наклонение)</Text>
+            <Text fw={600} mb="xs" c="#4dabf7">Δi (наклонение)</Text>
             <ElementVariationBar
               value={stats.elementStats.i.range * 180 / Math.PI}
               unit="град"
               mean={stats.elementStats.i.mean * 180 / Math.PI}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber((orbit?.i || 0), 4)}° → 
               Изменение: {formatExp(stats.elementStats.i.range * 180 / Math.PI)}°
             </Text>
           </Box>
 
           <Box>
-            <Text fw={600} mb="xs">ΔΩ (долгота узла)</Text>
+            <Text fw={600} mb="xs" c="#8884d8">ΔΩ (долгота узла)</Text>
             <ElementVariationBar
               value={stats.elementStats.Omega.range * 180 / Math.PI}
               unit="град"
               mean={stats.elementStats.Omega.mean * 180 / Math.PI}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber((orbit?.Omega || 0), 4)}° → 
               Изменение: {formatExp(stats.elementStats.Omega.range * 180 / Math.PI)}°
             </Text>
           </Box>
 
           <Box>
-            <Text fw={600} mb="xs">Δω (аргумент перицентра)</Text>
+            <Text fw={600} mb="xs" c="#da77f2">Δω (аргумент перицентра)</Text>
             <ElementVariationBar
               value={stats.elementStats.omega.range * 180 / Math.PI}
               unit="град"
               mean={stats.elementStats.omega.mean * 180 / Math.PI}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber((orbit?.omega || 0), 4)}° → 
               Изменение: {formatExp(stats.elementStats.omega.range * 180 / Math.PI)}°
             </Text>
@@ -259,116 +524,255 @@ export default function LunarStatisticsTab({ points, orbit }: LunarStatisticsTab
         </SimpleGrid>
       </Card>
 
-      {/* Quadrant analysis */}
-      <Card withBorder mb="md">
-        <Title order={4} mb="md">
-          Анализ по квадрантам орбиты
-        </Title>
-        <Text size="sm" c="dimmed" mb="md">
+      {/* Quadrant Analysis */}
+      <Card
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '24px',
+        }}
+      >
+        <Group gap="sm" mb="lg">
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #69db7c 0%, #51cf66 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconAward size={20} color="white" />
+          </div>
+          <Title order={4} style={{ fontSize: '18px' }}>
+            Анализ по квадрантам орбиты
+          </Title>
+        </Group>
+        
+        <Text size="sm" c="gray.4" mb="md" lh={1.6}>
           Средние значения ускорений в разных квадрантах аргумента широты u
         </Text>
 
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
           {stats.quadrantStats.map((quad, idx) => (
-            <Card key={idx} withBorder p="md">
-              <Text fw={600} mb="xs" c="blue">
+            <Card
+              key={idx}
+              style={{
+                background: 'rgba(255, 255, 255, 0.06)',
+                backdropFilter: 'blur(12px)',
+                border: `1px solid rgba(255, 255, 255, 0.1)`,
+                borderRadius: '12px',
+                padding: '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)';
+                e.currentTarget.style.boxShadow = '0 12px 48px rgba(102, 126, 234, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+              }}
+            >
+              <Text fw={600} mb="xs" c="#4dabf7" style={{ fontSize: '14px' }}>
                 Квадрант {idx + 1}
               </Text>
-              <Text size="xs" c="dimmed" mb="md">
+              <Text size="xs" c="gray.5" mb="md" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                 u ∈ [{quad.uMin}°, {quad.uMax}°]
               </Text>
-              <Text size="sm" mb="xs">
-                <b>S:</b> {formatExp(quad.S)} м/с²
-              </Text>
-              <Text size="sm" mb="xs">
-                <b>T:</b> {formatExp(quad.T)} м/с²
-              </Text>
-              <Text size="sm" mb="xs">
-                <b>W:</b> {formatExp(quad.W)} м/с²
-              </Text>
-              <Text size="sm" fw={600}>
-                |a|: {formatExp(quad.total)} м/с²
-              </Text>
+              
+              <Group gap="xs" mb="xs">
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff6b6b' }} />
+                <Text size="sm" c="gray.3">
+                  <Text span fw={600}>S:</Text> {formatExp(quad.S)} м/с²
+                </Text>
+              </Group>
+              
+              <Group gap="xs" mb="xs">
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4dabf7' }} />
+                <Text size="sm" c="gray.3">
+                  <Text span fw={600}>T:</Text> {formatExp(quad.T)} м/с²
+                </Text>
+              </Group>
+              
+              <Group gap="xs" mb="xs">
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#69db7c' }} />
+                <Text size="sm" c="gray.3">
+                  <Text span fw={600}>W:</Text> {formatExp(quad.W)} м/с²
+                </Text>
+              </Group>
+              
+              <Group gap="xs">
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffd43b' }} />
+                <Text size="sm" fw={600} c="gray.2">
+                  \|a\|: {formatExp(quad.total)} м/с²
+                </Text>
+              </Group>
             </Card>
           ))}
         </SimpleGrid>
       </Card>
 
-      {/* RMS Error analysis */}
-      <Card withBorder>
-        <Title order={4} mb="md">
-          Оценка численной точности
-        </Title>
-        <Text size="sm" c="dimmed" mb="md">
+      {/* RMS Error Analysis */}
+      <Card
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '24px',
+        }}
+      >
+        <Group gap="sm" mb="lg">
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconInfoCircle size={20} color="white" />
+          </div>
+          <Title order={4} style={{ fontSize: '18px' }}>
+            Оценка численной точности
+          </Title>
+        </Group>
+        
+        <Text size="sm" c="gray.4" mb="md" lh={1.6}>
           Среднеквадратичные отклонения как мера точности интегрирования
         </Text>
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+          {/* Energy Conservation */}
           <Box>
-            <Text fw={600} mb="xs">
+            <Text fw={600} mb="xs" c="#51cf66">
               Сохранение энергии (Δa/a)
             </Text>
             <Progress
               value={Math.min(100, Math.log10(stats.rmsErrors.energyRelativeError + 1e-16) + 16)}
               color={getEnergyColor(stats.rmsErrors.energyRelativeError)}
               size="xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+              }}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text 
+              size="sm" 
+              fw={700}
+              mt="xs"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: getEnergyColor(stats.rmsErrors.energyRelativeError),
+              }}
+            >
               {(stats.rmsErrors.energyRelativeError).toExponential(2)}
             </Text>
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Относительное изменение большой полуоси
             </Text>
           </Box>
 
+          {/* Smoothness */}
           <Box>
-            <Text fw={600} mb="xs">
+            <Text fw={600} mb="xs" c="#4dabf7">
               Гладкость траектории
             </Text>
             <Progress
               value={Math.min(100, Math.log10(stats.rmsErrors.smoothness + 1e-16) + 16)}
               color={getSmoothnessColor(stats.rmsErrors.smoothness)}
               size="xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+              }}
             />
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text 
+              size="sm" 
+              fw={700}
+              mt="xs"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: getSmoothnessColor(stats.rmsErrors.smoothness),
+              }}
+            >
               {formatExp(stats.rmsErrors.smoothness)} км
             </Text>
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Вторая разность радиуса
             </Text>
           </Box>
 
+          {/* RMS Omega */}
           <Box>
-            <Text fw={600} mb="xs">
+            <Text fw={600} mb="xs" c="#8884d8">
               RMS ошибка Ω
             </Text>
-            <Box style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 600 }}>
+            <Box 
+              style={{ 
+                fontFamily: "'JetBrains Mono', monospace", 
+                fontSize: 'clamp(18px, 2.5vw, 22px)', 
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #8884d8 0%, #339af0 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               {formatExp(stats.rmsErrors.rms_Omega * 180 / Math.PI)}°
             </Box>
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Среднеквадратичное отклонение долготы узла
             </Text>
           </Box>
 
+          {/* RMS i */}
           <Box>
-            <Text fw={600} mb="xs">
+            <Text fw={600} mb="xs" c="#82ca9d">
               RMS ошибка i
             </Text>
-            <Box style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 600 }}>
+            <Box 
+              style={{ 
+                fontFamily: "'JetBrains Mono', monospace", 
+                fontSize: 'clamp(18px, 2.5vw, 22px)', 
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #82ca9d 0%, #51cf66 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               {formatExp(stats.rmsErrors.rms_i * 180 / Math.PI)}°
             </Box>
-            <Text size="xs" c="dimmed" mt="xs">
+            <Text size="xs" c="gray.5" mt="xs">
               Среднеквадратичное отклонение наклонения
             </Text>
           </Box>
         </SimpleGrid>
 
-        <Text size="sm" mt="xl" fw={600}>
-          Общая оценка качества:
-        </Text>
-        <Text size="lg" mt="xs" c={getOverallQualityColor(stats.rmsErrors)}>
-          {getOverallQuality(stats.rmsErrors)}
-        </Text>
+        {/* Overall Quality Assessment */}
+        <Box mt="xl">
+          <Text size="sm" fw={600} mb="xs" c="gray.3">
+            Общая оценка качества:
+          </Text>
+          <Text 
+            size="lg" 
+            fw={700}
+            mt="xs"
+            c={getOverallQualityColor(stats.rmsErrors)}
+            style={{
+              fontSize: 'clamp(18px, 2.5vw, 22px)',
+            }}
+          >
+            {getOverallQuality(stats.rmsErrors)}
+          </Text>
+        </Box>
       </Card>
     </div>
   );
@@ -493,11 +897,14 @@ function ElementVariationBar({ value, unit, mean }: { value: number; unit: strin
         value={normalizedValue}
         color={value > 0.01 ? 'red' : value > 0.001 ? 'yellow' : 'green'}
         size="lg"
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+        }}
       />
-      <Text size="xs" c="dimmed" mt="xs">
+      <Text size="xs" c="gray.5" mt="xs">
         Величина: {value.toExponential(2)} {unit}
       </Text>
-      <Text size="xs" c="dimmed" mt="xs">
+      <Text size="xs" c="gray.5" mt="xs">
         Среднее отклонение: {mean.toExponential(2)} {unit}
       </Text>
     </div>
@@ -505,25 +912,25 @@ function ElementVariationBar({ value, unit, mean }: { value: number; unit: strin
 }
 
 function getEnergyColor(error: number): string {
-  if (error < 1e-10) return 'green';
-  if (error < 1e-8) return 'yellow';
-  if (error < 1e-6) return 'orange';
-  return 'red';
+  if (error < 1e-10) return '#51cf66';
+  if (error < 1e-8) return '#ffd43b';
+  if (error < 1e-6) return '#ffa94d';
+  return '#ff6b6b';
 }
 
 function getSmoothnessColor(smoothness: number): string {
-  if (smoothness < 1e-6) return 'green';
-  if (smoothness < 1e-4) return 'yellow';
-  if (smoothness < 1e-2) return 'orange';
-  return 'red';
+  if (smoothness < 1e-6) return '#51cf66';
+  if (smoothness < 1e-4) return '#ffd43b';
+  if (smoothness < 1e-2) return '#ffa94d';
+  return '#ff6b6b';
 }
 
 function getOverallQualityColor(rmsErrors: any): string {
   const quality = getOverallQuality(rmsErrors);
-  if (quality.includes('Отличное')) return 'green';
-  if (quality.includes('Хорошее')) return 'blue';
-  if (quality.includes('Удовлетворительное')) return 'yellow';
-  return 'red';
+  if (quality.includes('✅')) return '#51cf66';
+  if (quality.includes('👍')) return '#4dabf7';
+  if (quality.includes('⚠️')) return '#ffd43b';
+  return '#ff6b6b';
 }
 
 function getOverallQuality(rmsErrors: any): string {

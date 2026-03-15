@@ -6,6 +6,7 @@ import LunarOrbit3D from './tabs/LunarOrbit3D';
 import LunarPlotsTab from './tabs/LunarPlotsTab';
 import LunarComparisonTab from './tabs/LunarComparisonTab';
 import LunarStatisticsTab from './tabs/LunarStatisticsTab';
+import LunarHelpTab from './tabs/LunarHelpTab';
 
 interface LunarMainContentProps {
   result: CalculationResponse | null;
@@ -72,34 +73,7 @@ export default function LunarMainContent({
         </Tabs.Panel>
 
         <Tabs.Panel value="help">
-          <div>
-            <h2>Лабораторная работа №2</h2>
-            <h3>Изучение влияния лунных возмущений на движение ИСЗ</h3>
-            
-            <h4>Цель работы:</h4>
-            <p>Изучить влияние гравитационного поля Луны на орбиту искусственного спутника Земли.</p>
-            
-            <h4>Задачи:</h4>
-            <ol>
-              <li>Разработка математической модели движения ИСЗ с учетом лунных возмущений</li>
-              <li>Программирование математической модели</li>
-              <li>Анализ полученных результатов и графиков</li>
-            </ol>
-            
-            <h4>Теоретические сведения:</h4>
-            <p>
-              Возмущения от притяжения Луны описываются системой дифференциальных уравнений для 
-              орбитальных элементов. Составляющие возмущающего ускорения определяются через 
-              проекции сил притяжения Луны в геоцентрической орбитальной системе координат.
-            </p>
-            
-            <h4>Параметры Луны:</h4>
-            <ul>
-              <li>Наклонение орбиты: 5.145 град</li>
-              <li>Высота в апогее/перигее: 405696/363104 км</li>
-              <li>Гравитационный параметр: μₗ = 4902.8 км³/с²</li>
-            </ul>
-          </div>
+          <LunarHelpTab />
         </Tabs.Panel>
       </Tabs>
     </Box>

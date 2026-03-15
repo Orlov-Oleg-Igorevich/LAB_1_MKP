@@ -10,6 +10,8 @@ interface LunarSidebarProps {
   onOrbitChange: (orbit: OrbitalElements) => void;
   pointsCount: number;
   onPointsCountChange: (value: number) => void;
+  stepSize: number | null;
+  onStepSizeChange: (value: number | null) => void;
   loading: boolean;
   error: string | null;
   result: any | null;
@@ -26,6 +28,8 @@ export default function LunarSidebar({
   onOrbitChange,
   pointsCount,
   onPointsCountChange,
+  stepSize,
+  onStepSizeChange,
   loading,
   error,
   result,
@@ -138,6 +142,22 @@ export default function LunarSidebar({
             min={3}
             max={5000}
             onChange={(v) => onPointsCountChange(Number(v))}
+          />
+          
+          <NumberInput
+            label={
+              <Group gap="xs">
+                <span>Шаг интегрирования, с</span>
+                {IntegrationTooltips.stepSize}
+              </Group>
+            }
+            value={stepSize ?? ''}
+            placeholder="Авто"
+            min={1}
+            max={1000}
+            step={1}
+            onChange={(v) => onStepSizeChange(v === null || v === '' ? null : Number(v))}
+            description="Оставьте пустым для автовыбора"
           />
 
           <Group justify="space-between">

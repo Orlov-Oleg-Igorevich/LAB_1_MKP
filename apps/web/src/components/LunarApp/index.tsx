@@ -25,6 +25,7 @@ export default function LunarApp() {
   });
 
   const [pointsCount, setPointsCount] = useState<number>(200);
+  const [stepSize, setStepSize] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -62,6 +63,7 @@ export default function LunarApp() {
         },
         options: {
           pointsCount,
+          stepSize: stepSize ?? undefined,
         },
       });
       setResult(r.data);
@@ -86,6 +88,7 @@ export default function LunarApp() {
         },
         options: {
           pointsCount,
+          stepSize: stepSize ?? undefined,
         },
       }, {
         responseType: 'blob',
@@ -212,6 +215,8 @@ export default function LunarApp() {
           onOrbitChange={setOrbit}
           pointsCount={pointsCount}
           onPointsCountChange={setPointsCount}
+          stepSize={stepSize}
+          onStepSizeChange={setStepSize}
           loading={loading}
           error={error}
           result={result}

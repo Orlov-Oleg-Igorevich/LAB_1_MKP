@@ -44,6 +44,7 @@ export class LunarService {
     const options = body.options ?? {};
     const pointsCount = options.pointsCount ?? 100;
     let integrationTime = options.integrationTime ?? 0;
+    const fixedStepSize = options.stepSize; // User-provided step size (optional)
 
     // Convert satellite orbital elements to radians
     const iRad = deg2rad(satelliteOrbit.i);
@@ -71,7 +72,19 @@ export class LunarService {
     // Integration range: one full orbit in argument of latitude
     const u0 = M0 + omegaRad; // Initial argument of latitude (approximation)
     const uFinal = u0 + 2 * Math.PI; // One complete orbit
-    const stepSize = (uFinal - u0) / Math.max(100, pointsCount); // Adaptive step
+
+    // Calculate step size
+    let stepSize: number;
+    if (fixedStepSize !== undefined && fixedStepSize > 0) {
+      // Use user-provided step size (convert from seconds to argument of latitude)
+      const meanMotion = Math.sqrt(
+        PHYSICS_CONSTANTS.mu / Math.pow(satelliteOrbit.a, 3),
+      );
+      stepSize = meanMotion * fixedStepSize; // Convert time step to u step
+    } else {
+      // Automatic step based on points count
+      stepSize = (uFinal - u0) / Math.max(100, pointsCount);
+    }
 
     // Perform RK4 integration
     const integratedStates = this.integrateOrbitalElements(
@@ -81,6 +94,7 @@ export class LunarService {
       stepSize,
       moonOrbit,
       integrationTime,
+      pointsCount, // Pass desired points count for resampling
     );
 
     // Generate output points using integrated states
@@ -227,6 +241,7 @@ export class LunarService {
       u: number;
     },
     totalTime: number,
+    desiredPointsCount: number = 100, // Desired number of output points
   ): Array<{
     u: number;
     state: OrbitalElementsState;
@@ -297,7 +312,84 @@ export class LunarService {
       }
     }
 
-    return states;
+    // Resample to match desired points count
+    const resampledStates = this.resampleStates(states, desiredPointsCount);
+
+    return resampledStates;
+  }
+
+  /**
+   * Resample integrated states to match desired points count
+   */
+  private resampleStates(
+    states: Array<{
+      u: number;
+      state: OrbitalElementsState;
+      time: number;
+    }>,
+    desiredCount: number,
+  ): Array<{
+    u: number;
+    state: OrbitalElementsState;
+    time: number;
+  }> {
+    if (states.length <= 2 || desiredCount <= 2) {
+      return states; // No need to resample
+    }
+
+    const resampled: Array<{
+      u: number;
+      state: OrbitalElementsState;
+      time: number;
+    }> = [];
+
+    const uStart = states[0].u;
+    const uEnd = states[states.length - 1].u;
+    const du = (uEnd - uStart) / (desiredCount - 1);
+
+    for (let i = 0; i < desiredCount; i++) {
+      const targetU = uStart + i * du;
+
+      // Find surrounding points in original array
+      let lowerIdx = 0;
+      let upperIdx = states.length - 1;
+
+      for (let j = 0; j < states.length - 1; j++) {
+        if (states[j].u <= targetU && states[j + 1].u >= targetU) {
+          lowerIdx = j;
+          upperIdx = j + 1;
+          break;
+        }
+      }
+
+      // Linear interpolation
+      const lower = states[lowerIdx];
+      const upper = states[upperIdx];
+
+      if (lowerIdx === upperIdx) {
+        resampled.push({ ...lower });
+      } else {
+        const t = (targetU - lower.u) / (upper.u - lower.u);
+
+        const interpolatedState: OrbitalElementsState = {
+          Omega:
+            lower.state.Omega + t * (upper.state.Omega - lower.state.Omega),
+          i: lower.state.i + t * (upper.state.i - lower.state.i),
+          p: lower.state.p + t * (upper.state.p - lower.state.p),
+          e: lower.state.e + t * (upper.state.e - lower.state.e),
+          omega:
+            lower.state.omega + t * (upper.state.omega - lower.state.omega),
+        };
+
+        resampled.push({
+          u: targetU,
+          state: interpolatedState,
+          time: lower.time + t * (upper.time - lower.time),
+        });
+      }
+    }
+
+    return resampled;
   }
 
   /**
