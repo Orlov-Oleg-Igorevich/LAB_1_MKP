@@ -195,8 +195,9 @@ export class ExportController {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--font-render-hinting=none',
-          '--disable-font-subpixel-positioning',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--window-size=1920,1080',
         ],
       });
 
@@ -482,8 +483,9 @@ export class ExportController {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--font-render-hinting=none',
-          '--disable-font-subpixel-positioning',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--window-size=1920,1080',
         ],
       });
 

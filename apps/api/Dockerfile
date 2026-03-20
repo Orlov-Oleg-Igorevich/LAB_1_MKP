@@ -44,7 +44,10 @@ RUN apk add --no-cache \
     ttf-freefont \
     ttf-dejavu \
     ttf-droid \
-    ttf-noto
+    ttf-inconsolata \
+    terminus-font \
+    xdg-utils \
+    dbus-libs
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     PUPPETEER_SKIP_DOWNLOAD=true \
