@@ -188,20 +188,24 @@ export class ExportController {
       // Запускаем браузер (в Docker используем системный Chromium, путь передаём через переменную окружения)
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+        executablePath:
+          process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--font-render-hinting=none',
+          '--disable-font-subpixel-positioning',
         ],
       });
 
       const page = await browser.newPage();
 
-      // ✅ Убираем encoding - он не нужен
+      // Устанавливаем таймаут и генерируем PDF из HTML
       await page.setContent(html, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'load',
+        timeout: 30000,
       });
 
       // ✅ Генерируем PDF (возвращает Uint8Array)
@@ -471,18 +475,22 @@ export class ExportController {
 
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+        executablePath:
+          process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--font-render-hinting=none',
+          '--disable-font-subpixel-positioning',
         ],
       });
 
       const page = await browser.newPage();
       await page.setContent(html, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'load',
+        timeout: 30000,
       });
 
       const pdfBuffer = await page.pdf({

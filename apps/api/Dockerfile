@@ -41,10 +41,14 @@ RUN apk add --no-cache \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    ttf-dejavu \
+    ttf-droid \
+    ttf-noto
 
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_DISABLE_HEADLESS_WARNING=true
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
 
