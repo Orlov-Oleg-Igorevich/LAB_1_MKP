@@ -566,6 +566,15 @@ export class ExportController {
         timeout: 180000,
       });
 
+      console.log(
+        '[Lunar PDF Export] ✓ Browser launched! Waiting for stabilization...',
+      );
+
+      // Ждём немного для стабилизации браузера
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      console.log('[Lunar PDF Export] ✓ Browser stable, creating page...');
+
       const page = await browser.newPage();
       await page.setContent(html, {
         waitUntil: 'load',
