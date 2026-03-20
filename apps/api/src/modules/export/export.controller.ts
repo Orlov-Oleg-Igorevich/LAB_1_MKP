@@ -566,6 +566,14 @@ export class ExportController {
         timeout: 180000,
       });
 
+      // Проверяем, что браузер действительно работает
+      console.log('[Lunar PDF Export] Checking browser connection...');
+      const browserVersion = await browser.version();
+      console.log(
+        '[Lunar PDF Export] ✓ Browser connected! Version:',
+        browserVersion,
+      );
+
       console.log(
         '[Lunar PDF Export] ✓ Browser launched! Waiting for stabilization...',
       );
