@@ -178,7 +178,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
           }}
         >
           <Text fw={700} mb="xs" style={{ color: '#667eea' }}>
-            Время: {(Number(label) / 3600).toFixed(3)} ч
+            Время: {Number(label).toFixed(3)} ч
           </Text>
           {payload.map((entry: any, index: number) => (
             <Group key={index} gap="xs" mb="xs">
@@ -578,6 +578,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
                     dataKey="t_hours"
                     label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
                   />
                   <YAxis
                     label={{ value: 'Ω, град', angle: -90, position: 'insideLeft', fill: '#888' }}
@@ -624,6 +625,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
                     dataKey="t_hours"
                     label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
                   />
                   <YAxis
                     label={{ value: 'i, град', angle: -90, position: 'insideLeft', fill: '#888' }}
@@ -670,6 +672,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
                     dataKey="t_hours"
                     label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
                   />
                   <YAxis
                     label={{ value: 'e', angle: -90, position: 'insideLeft', fill: '#888' }}
@@ -716,6 +719,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
                     dataKey="t_hours"
                     label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
                   />
                   <YAxis
                     label={{ value: 'ω, град', angle: -90, position: 'insideLeft', fill: '#888' }}
@@ -801,6 +805,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
                     dataKey="t_hours"
                     label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
                   />
                   <YAxis
                     label={{ value: 'Δ, град', angle: -90, position: 'insideLeft', fill: '#888' }}
@@ -847,6 +852,7 @@ export default function LunarComparisonTab({ points, orbit }: LunarComparisonTab
                     dataKey="t_hours"
                     label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
                   />
                   <YAxis
                     label={{ value: 'Δ', angle: -90, position: 'insideLeft', fill: '#888' }}

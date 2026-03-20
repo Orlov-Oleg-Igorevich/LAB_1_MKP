@@ -98,7 +98,7 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
           }}
         >
           <Text fw={700} mb="xs" style={{ color: '#667eea' }}>
-            Время: {(Number(label) / 3600).toFixed(3)} ч
+            Время: {Number(label).toFixed(3)} ч
           </Text>
           {payload.map((entry: any, index: number) => (
             <Group key={index} gap="xs" mb="xs">

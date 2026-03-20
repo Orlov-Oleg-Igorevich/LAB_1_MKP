@@ -54,8 +54,9 @@ export class LunarService {
 
     // Calculate orbital period of satellite
     const period =
-      (2 * Math.PI * Math.sqrt(Math.pow(satelliteOrbit.a, 3))) /
-      PHYSICS_CONSTANTS.mu;
+      2 *
+      Math.PI *
+      Math.sqrt(Math.pow(satelliteOrbit.a, 3) / PHYSICS_CONSTANTS.mu);
     if (integrationTime === 0) {
       integrationTime = period;
     }
@@ -247,9 +248,9 @@ export class LunarService {
     state: OrbitalElementsState;
     time: number;
   }> {
-    const tolerance = 1e-8; // Relative error tolerance
-    const minStep = (uFinal - u0) / 10000; // Minimum step size
-    const maxStep = (uFinal - u0) / 50; // Maximum step size
+    const tolerance = 1e-10; // Relative error tolerance
+    const minStep = (uFinal - u0) / 50000; // Minimum step size
+    const maxStep = (uFinal - u0) / 100; // Maximum step size
     const safetyFactor = 0.9; // Safety factor for step adjustment
     const beta = 0.2; // Maximum step change factor
 
@@ -318,8 +319,14 @@ export class LunarService {
         if (currentState.i > Math.PI)
           currentState.i = 2 * Math.PI - currentState.i;
 
-        // Calculate corresponding time
-        const time = ((currentU - u0) / (2 * Math.PI)) * totalTime;
+        // Calculate corresponding time based on mean motion
+        // Time = delta_u / n, where n is mean motion
+        const semiMajorAxis =
+          currentState.p / (1 - currentState.e * currentState.e);
+        const meanMotion = Math.sqrt(
+          PHYSICS_CONSTANTS.mu / Math.pow(semiMajorAxis, 3),
+        );
+        const time = (currentU - u0) / meanMotion;
 
         states.push({ u: currentU, state: { ...currentState }, time });
       }
