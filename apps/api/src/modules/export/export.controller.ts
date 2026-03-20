@@ -530,12 +530,26 @@ export class ExportController {
           '[Lunar PDF Export] Chromium executable exists:',
           chromePath,
         );
+
+        // Пробуем запустить Chromium для проверки
+        try {
+          const { execSync } = await import('child_process');
+          const version = execSync(`${chromePath} --version`).toString();
+          console.log('[Lunar PDF Export] Chromium version:', version.trim());
+        } catch (e) {
+          console.error(
+            '[Lunar PDF Export] Failed to get Chromium version:',
+            e instanceof Error ? e.message : 'Unknown',
+          );
+        }
       } else {
         console.error(
           '[Lunar PDF Export] CRITICAL: Chromium NOT FOUND at:',
           chromePath,
         );
       }
+
+      console.log('[Lunar PDF Export] Attempting to launch Puppeteer...');
 
       browser = await puppeteer.launch({
         headless: true,
