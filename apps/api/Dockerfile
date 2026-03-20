@@ -35,6 +35,8 @@ ENV NODE_ENV=production
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=deps /app/node_modules ./node_modules
+
+# Установка системных библиотек для Chromium
 RUN apk add --no-cache \
     chromium \
     nss \

@@ -11,6 +11,7 @@ import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Parser } from 'json2csv';
 import * as puppeteer from 'puppeteer';
+import * as fs from 'fs';
 import { CalculationRequestDto } from '../calculation/dto/calculation.dto';
 import { CalculationService } from '../calculation/services/calculation.service';
 import { rad2deg } from '@lab/shared';
@@ -191,21 +192,32 @@ export class ExportController {
         process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
       );
 
+      // Проверяем существование файла Chromium
+      const chromePath =
+        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+      if (fs.existsSync(chromePath)) {
+        console.log('[PDF Export] Chromium executable exists:', chromePath);
+      } else {
+        console.error(
+          '[PDF Export] CRITICAL: Chromium NOT FOUND at:',
+          chromePath,
+        );
+      }
+
       // Запускаем браузер (в Docker используем системный Chromium, путь передаём через переменную окружения)
       browser = await puppeteer.launch({
         headless: true,
-        executablePath:
-          process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        executablePath: chromePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process',
-          '--window-size=1920,1080',
+          '--single-process',
+          '--no-zygote',
         ],
         dumpio: true, // Вывод stdout/stderr браузера в консоль
+        timeout: 180000, // 3 минуты на запуск
       });
 
       console.log('[PDF Export] Browser launched successfully!');
