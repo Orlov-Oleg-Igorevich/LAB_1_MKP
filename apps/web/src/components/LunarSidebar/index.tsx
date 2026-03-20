@@ -152,12 +152,15 @@ export default function LunarSidebar({
               </Group>
             }
             value={stepSize ?? ''}
-            placeholder="Авто"
+            placeholder="Авто (60 с)"
             min={1}
-            max={1000}
+            max={300}
             step={1}
             onChange={(v) => onStepSizeChange(v === null || v === '' ? null : Number(v))}
-            description="Оставьте пустым для автовыбора"
+            description="Оставьте пустым для автовыбора (рек. 10-100 с)"
+            error={stepSize !== null && (stepSize < 10 || stepSize > 100) 
+              ? 'Рекомендуемый диапазон: 10-100 с. Большие шаги могут снизить точность.' 
+              : undefined}
           />
 
           <Group justify="space-between">

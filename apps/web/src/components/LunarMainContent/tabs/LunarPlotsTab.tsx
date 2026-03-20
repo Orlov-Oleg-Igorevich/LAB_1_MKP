@@ -12,6 +12,11 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
 
   // Prepare data for charts
   const chartData = useMemo(() => {
+    if (!points || points.length === 0) return [];
+    
+    const initialA = points[0].orbitalElements.a;
+    const initialE = points[0].orbitalElements.e;
+    
     return points.map((p, idx) => ({
       index: idx,
       time: p.t,
@@ -20,8 +25,11 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
       Omega_deg: p.orbitalElements.Omega * (180 / Math.PI),
       i_deg: p.orbitalElements.i * (180 / Math.PI),
       e: p.orbitalElements.e,
+      delta_e: p.orbitalElements.e - initialE, // Change in eccentricity
       omega_deg: p.orbitalElements.omega * (180 / Math.PI),
       p: p.orbitalElements.p,
+      a: p.orbitalElements.a,
+      delta_a: p.orbitalElements.a - initialA, // Change in semi-major axis
       deltaOmega: p.changes.deltaOmega,
       deltaI: p.changes.deltaI,
       deltaE: p.changes.deltaE,
@@ -607,6 +615,7 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
                     label={{ value: 'e', angle: -90, position: 'insideLeft', fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
                     domain={['auto', 'auto']}
+                    tickFormatter={(val: number) => val.toFixed(6)}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend 
@@ -627,6 +636,45 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
                     strokeWidth={2.5}
                     dot={false}
                     name="e"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+
+            {/* Semi-major axis change Δa */}
+            <Box>
+              <Text size="sm" fw={700} c="#00CED1" mb="sm">Δa (изменение большой полуоси)</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'Δa, км', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                    tickFormatter={(val: number) => val.toExponential(2)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="delta_a"
+                    stroke="#00CED1"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="Δa (км)"
                     animationDuration={1000}
                   />
                 </LineChart>
@@ -771,7 +819,7 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
 
             {/* Δe */}
             <Box>
-              <Text size="sm" fw={700} c="gray.3" mb="sm">Изменение эксцентриситета</Text>
+              <Text size="sm" fw={700} c="gray.3" mb="sm">Изменение эксцентриситета (Δe)</Text>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                   <CartesianGrid {...chartGridStyle} />
@@ -785,6 +833,7 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
                     label={{ value: 'Δe', angle: -90, position: 'insideLeft', fill: '#888' }}
                     tick={{ fill: '#888', fontSize: 12 }}
                     domain={['auto', 'auto']}
+                    tickFormatter={(val: number) => val.toExponential(4)}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend 
@@ -796,11 +845,50 @@ export default function LunarPlotsTab({ points }: LunarPlotsTabProps) {
                   <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
                   <Line
                     type="monotone"
-                    dataKey="deltaE"
+                    dataKey="delta_e"
                     stroke="#ffc658"
                     strokeWidth={2.5}
                     dot={false}
                     name="Δe"
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+
+            {/* Δa */}
+            <Box>
+              <Text size="sm" fw={700} c="gray.3" mb="sm">Изменение большой полуоси (Δa)</Text>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid {...chartGridStyle} />
+                  <XAxis
+                    dataKey="time_hours"
+                    label={{ value: 'Время, ч', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    tickFormatter={(t: number) => t.toFixed(1)}
+                  />
+                  <YAxis
+                    label={{ value: 'Δa, км', angle: -90, position: 'insideLeft', fill: '#888' }}
+                    tick={{ fill: '#888', fontSize: 12 }}
+                    domain={['auto', 'auto']}
+                    tickFormatter={(val: number) => val.toExponential(2)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ 
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="delta_a"
+                    stroke="#00CED1"
+                    strokeWidth={2.5}
+                    dot={false}
+                    name="Δa (км)"
                     animationDuration={1000}
                   />
                 </LineChart>

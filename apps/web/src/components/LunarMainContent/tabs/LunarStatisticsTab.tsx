@@ -466,7 +466,10 @@ export default function LunarStatisticsTab({ points, orbit }: LunarStatisticsTab
             />
             <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber(orbit?.a || 0, 2)} км → 
-              Изменение: {formatExp(stats.elementStats.a.range)} км
+              Конечное: {formatNumber(stats.elementStats.a.final, 2)} км
+            </Text>
+            <Text size="xs" c="gray.5">
+              Изменение: {formatExp(stats.elementStats.a.range)} км ({(stats.elementStats.a.range / stats.elementStats.a.initial * 100).toExponential(2)}%)
             </Text>
           </Box>
 
@@ -479,7 +482,10 @@ export default function LunarStatisticsTab({ points, orbit }: LunarStatisticsTab
             />
             <Text size="xs" c="gray.5" mt="xs">
               Начальное: {formatNumber(orbit?.e || 0, 6)} → 
-              Изменение: {formatExp(stats.elementStats.e.range)}
+              Конечное: {formatNumber(stats.elementStats.e.final, 6)}
+            </Text>
+            <Text size="xs" c="gray.5">
+              Изменение: {formatExp(stats.elementStats.e.range)} ({(stats.elementStats.e.range / stats.elementStats.e.initial * 100).toExponential(2)}%)
             </Text>
           </Box>
 
@@ -792,13 +798,14 @@ function calculateComponentStats(values: number[]) {
 function calculateVariationStats(values: number[]) {
   const initial = values[0];
   const final = values[values.length - 1];
-  const range = Math.abs(final - initial);
+  const range = final - initial; // Signed change (not absolute)
+  const absRange = Math.abs(range); // For display purposes
   const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
   const stdDev = Math.sqrt(
     values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length,
   );
 
-  return { initial, final, range, mean, stdDev };
+  return { initial, final, range, absRange, mean, stdDev };
 }
 
 function calculateQuadrantStats(points: any[]) {
@@ -889,20 +896,21 @@ function formatNumber(num: number, decimals: number): string {
 }
 
 function ElementVariationBar({ value, unit, mean }: { value: number; unit: string; mean: number }) {
-  const normalizedValue = Math.min(100, Math.log10(Math.abs(value) + 1e-16) + 16);
+  const absValue = Math.abs(value);
+  const normalizedValue = Math.min(100, Math.log10(absValue + 1e-16) + 16);
 
   return (
     <div>
       <Progress
         value={normalizedValue}
-        color={value > 0.01 ? 'red' : value > 0.001 ? 'yellow' : 'green'}
+        color={absValue > 0.01 ? 'red' : absValue > 0.001 ? 'yellow' : 'green'}
         size="lg"
         style={{
           background: 'rgba(255, 255, 255, 0.1)',
         }}
       />
       <Text size="xs" c="gray.5" mt="xs">
-        Величина: {value.toExponential(2)} {unit}
+        Величина: {value.toExponential(2)} {unit} {value < 0 ? '(уменьшение)' : value > 0 ? '(увеличение)' : ''}
       </Text>
       <Text size="xs" c="gray.5" mt="xs">
         Среднее отклонение: {mean.toExponential(2)} {unit}

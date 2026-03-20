@@ -136,11 +136,11 @@ export class LunarService {
       // Calculate lunar perturbation acceleration components
       const mu_moon = LUNAR_CONSTANTS.mu;
       const Fx =
-        -mu_moon * (rho.x / Math.pow(rhoMag, 3) + r12.x / Math.pow(r12Mag, 3));
+        -mu_moon * (rho.x / Math.pow(rhoMag, 3) - r12.x / Math.pow(r12Mag, 3));
       const Fy =
-        -mu_moon * (rho.y / Math.pow(rhoMag, 3) + r12.y / Math.pow(r12Mag, 3));
+        -mu_moon * (rho.y / Math.pow(rhoMag, 3) - r12.y / Math.pow(r12Mag, 3));
       const Fz =
-        -mu_moon * (rho.z / Math.pow(rhoMag, 3) + r12.z / Math.pow(r12Mag, 3));
+        -mu_moon * (rho.z / Math.pow(rhoMag, 3) - r12.z / Math.pow(r12Mag, 3));
 
       // Transform to orbital coordinate system (S, T, W)
       const S = Fx * Math.cos(theta) + Fy * Math.sin(theta);
@@ -241,7 +241,7 @@ export class LunarService {
       u: number;
     },
     totalTime: number,
-    desiredPointsCount: number = 100, // Desired number of output points
+    desiredPointsCount: number = 100,
   ): Array<{
     u: number;
     state: OrbitalElementsState;
@@ -252,6 +252,10 @@ export class LunarService {
     const maxStep = (uFinal - u0) / 50; // Maximum step size
     const safetyFactor = 0.9; // Safety factor for step adjustment
     const beta = 0.2; // Maximum step change factor
+
+    // Eccentricity constraints to maintain physical validity
+    const maxEccentricity = 0.999;
+    const minEccentricity = 0.001;
 
     const states: Array<{
       u: number;
@@ -294,9 +298,25 @@ export class LunarService {
         currentU += h;
         Object.assign(currentState, result.state5); // Use higher order solution
 
+        // Apply physical constraints to maintain orbital validity
+        currentState.e = Math.max(
+          minEccentricity,
+          Math.min(maxEccentricity, currentState.e),
+        );
+
+        // Ensure p remains positive (physical constraint)
+        if (currentState.p <= 0) {
+          currentState.p = initialState.p; // Reset to initial value if invalid
+        }
+
         // Normalize angles
         currentState.Omega = this.normalizeAngle(currentState.Omega);
         currentState.omega = this.normalizeAngle(currentState.omega);
+
+        // Normalize inclination to [0, π]
+        if (currentState.i < 0) currentState.i = -currentState.i;
+        if (currentState.i > Math.PI)
+          currentState.i = 2 * Math.PI - currentState.i;
 
         // Calculate corresponding time
         const time = ((currentU - u0) / (2 * Math.PI)) * totalTime;
@@ -695,6 +715,7 @@ export class LunarService {
   /**
    * Compute derivatives of orbital elements
    * Implements differential equations from methodology p.3
+   * Note: Accelerations S, T, W are in km/s² (consistent with μ in km³/s²)
    */
   private computeDerivatives(
     state: OrbitalElementsState,
@@ -741,11 +762,11 @@ export class LunarService {
 
     const mu_moon = LUNAR_CONSTANTS.mu;
     const Fx =
-      -mu_moon * (rho.x / Math.pow(rhoMag, 3) + r12.x / Math.pow(r12Mag, 3));
+      -mu_moon * (rho.x / Math.pow(rhoMag, 3) - r12.x / Math.pow(r12Mag, 3));
     const Fy =
-      -mu_moon * (rho.y / Math.pow(rhoMag, 3) + r12.y / Math.pow(r12Mag, 3));
+      -mu_moon * (rho.y / Math.pow(rhoMag, 3) - r12.y / Math.pow(r12Mag, 3));
     const Fz =
-      -mu_moon * (rho.z / Math.pow(rhoMag, 3) + r12.z / Math.pow(r12Mag, 3));
+      -mu_moon * (rho.z / Math.pow(rhoMag, 3) - r12.z / Math.pow(r12Mag, 3));
 
     // Transform to orbital frame
     const S = Fx * Math.cos(theta) + Fy * Math.sin(theta);
@@ -843,7 +864,7 @@ export class LunarService {
     },
   ) {
     // Mean motion of Moon (rad/s)
-    const n_moon = Math.sqrt(LUNAR_CONSTANTS.mu / Math.pow(moonOrbit.a, 3));
+    const n_moon = Math.sqrt(PHYSICS_CONSTANTS.mu / Math.pow(moonOrbit.a, 3));
 
     // Mean anomaly at time t
     const M_moon = n_moon * time + deg2rad(moonOrbit.u);
