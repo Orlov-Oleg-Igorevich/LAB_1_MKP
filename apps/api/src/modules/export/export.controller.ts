@@ -559,20 +559,36 @@ export class ExportController {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--single-process',
           '--no-zygote',
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-extensions',
+          '--disable-sync',
+          '--disable-translate',
+          '--hide-scrollbars',
+          '--metrics-recording-only',
+          '--mute-audio',
+          '--no-first-run',
+          '--safebrowsing-disable-auto-update',
         ],
         dumpio: true,
         timeout: 180000,
       });
 
-      // Проверяем, что браузер действительно работает
-      console.log('[Lunar PDF Export] Checking browser connection...');
-      const browserVersion = await browser.version();
-      console.log(
-        '[Lunar PDF Export] ✓ Browser connected! Version:',
-        browserVersion,
-      );
+      // Критическая проверка - жив ли браузер
+      console.log('[Lunar PDF Export] Checking if browser is alive...');
+      try {
+        const browserVersion = await browser.version();
+        console.log(
+          '[Lunar PDF Export] ✓ Browser ALIVE! Version:',
+          browserVersion,
+        );
+      } catch (versionError) {
+        console.error(
+          '[Lunar PDF Export] ✗ Browser DIED during version check!',
+        );
+        throw versionError;
+      }
 
       console.log(
         '[Lunar PDF Export] ✓ Browser launched! Waiting for stabilization...',
