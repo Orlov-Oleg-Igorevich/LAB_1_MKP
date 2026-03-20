@@ -248,7 +248,7 @@ export class LunarService {
     state: OrbitalElementsState;
     time: number;
   }> {
-    const tolerance = 1e-10; // Relative error tolerance
+    const tolerance = 1e-14; // Relative error tolerance
     const minStep = (uFinal - u0) / 50000; // Minimum step size
     const maxStep = (uFinal - u0) / 100; // Maximum step size
     const safetyFactor = 0.9; // Safety factor for step adjustment

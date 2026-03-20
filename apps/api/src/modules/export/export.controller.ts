@@ -727,21 +727,21 @@ export class ExportController {
         <h2>1. Исходные данные</h2>
         <h3>Параметры орбиты спутника:</h3>
         <ul>
-          <li>Большая полуось a = ${satelliteOrbit.a} км</li>
-          <li>Эксцентриситет e = ${satelliteOrbit.e}</li>
-          <li>Наклонение i = ${satelliteOrbit.i}°</li>
-          <li>Долгота восходящего узла Ω = ${satelliteOrbit.Omega}°</li>
-          <li>Аргумент перицентра ω = ${satelliteOrbit.omega}°</li>
-          <li>Средняя аномалия M = ${satelliteOrbit.M}°</li>
+          <li>Большая полуось a = ${satelliteOrbit.a.toFixed(1)} км</li>
+          <li>Эксцентриситет e = ${satelliteOrbit.e.toFixed(2)}</li>
+          <li>Наклонение i = ${satelliteOrbit.i.toFixed(1)}°</li>
+          <li>Долгота восходящего узла Ω = ${satelliteOrbit.Omega.toFixed(1)}°</li>
+          <li>Аргумент перицентра ω = ${satelliteOrbit.omega.toFixed(1)}°</li>
+          <li>Средняя аномалия M = ${satelliteOrbit.M.toFixed(1)}°</li>
         </ul>
 
         <h3>Параметры орбиты Луны:</h3>
         <ul>
-          <li>Большая полуось aₗ = ${moonOrbit.a} км</li>
-          <li>Эксцентриситет eₗ = ${moonOrbit.e}</li>
-          <li>Наклонение iₗ = ${moonOrbit.i}°</li>
-          <li>Долгота восходящего узла Ωₗ = ${moonOrbit.Omega}°</li>
-          <li>Аргумент широты uₗ = ${moonOrbit.u}°</li>
+          <li>Большая полуось aₗ = ${moonOrbit.a.toFixed(1)} км</li>
+          <li>Эксцентриситет eₗ = ${moonOrbit.e.toFixed(2)}</li>
+          <li>Наклонение iₗ = ${moonOrbit.i.toFixed(1)}°</li>
+          <li>Долгота восходящего узла Ωₗ = ${moonOrbit.Omega.toFixed(1)}°</li>
+          <li>Аргумент широты uₗ = ${moonOrbit.u.toFixed(1)}°</li>
         </ul>
 
         <h3>Параметры расчёта:</h3>

@@ -73,7 +73,7 @@ export default function LunarSidebar({
                 {OrbitalElementTooltips.eccentricity}
               </Group>
             }
-            value={orbit.e}
+            value={orbit.e.toFixed(2)}
             min={0}
             max={0.999999}
             step={0.01}

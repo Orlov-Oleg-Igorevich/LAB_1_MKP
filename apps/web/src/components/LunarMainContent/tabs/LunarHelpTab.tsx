@@ -295,7 +295,7 @@ export default function LunarHelpTab() {
               marginBottom: '12px',
             }}
           >
-            a⃗ = -μₗ [ρ⃗/ρ³ + r⃗₁₂/r₁₂³]
+            a = -μₗ [ρ/ρ³ + r₁₂/r₁₂³]
           </Text>
           
           <Text size="sm" c="gray.4" ta="center">
@@ -522,7 +522,7 @@ export default function LunarHelpTab() {
               boxShadow: '0 4px 16px rgba(99, 230, 190, 0.4)',
             }}
           >
-            <IconMathFunction size={28} color="white" strokeWidth={2} />
+            📐
           </div>
           <Title order={4} style={{ fontSize: '20px', fontWeight: 700 }}>
             🔬 Методика расчётов
@@ -530,11 +530,57 @@ export default function LunarHelpTab() {
         </Group>
         
         <Text size="md" c="gray.3" mb="lg" lh={1.8}>
-          Численное интегрирование системы дифференциальных уравнений выполняется методами 
-          Рунге-Кутта 4-го порядка (RK4) с фиксированным шагом или адаптивным методом 
-          Рунге-Кутта-Фельдберга (RKF45) с автоматическим выбором шага.
+          В данной работе применяется <strong>RKF45 (метод Рунге-Кутты-Фельдберга 4(5) порядка)</strong> - 
+          адаптивный метод с автоматическим выбором шага интегрирования на основе оценки локальной погрешности.
         </Text>
-        
+
+        <Box
+          style={{
+            background: 'rgba(240, 147, 251, 0.1)',
+            border: '1px solid rgba(240, 147, 251, 0.3)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px',
+          }}
+        >
+          <Title order={5} mb="md" style={{ fontSize: '16px', color: '#f093fb' }}>
+            🚀 Используемый метод: RKF45
+          </Title>
+          <List spacing="sm" size="sm" c="gray.3">
+            <List.Item><strong>Адаптивный шаг:</strong> алгоритм автоматически подбирает оптимальный шаг интегрирования</List.Item>
+            <List.Item><strong>Два решения:</strong> 4-го и 5-го порядков точности для контроля погрешности</List.Item>
+            <List.Item><strong>Автоматический контроль ошибки:</strong> относительная погрешность ε = 10⁻¹⁴</List.Item>
+            <List.Item><strong>Эффективность:</strong> шаг уменьшается на участках с быстрой динамикой, увеличивается на гладких участках</List.Item>
+            <List.Item><strong>Точность:</strong> O(h⁵) для основного решения, O(h⁴) для оценки погрешности</List.Item>
+            <List.Item><strong>6 вычислений производных на шаг</strong></List.Item>
+          </List>
+        </Box>
+
+        <Title order={6} mb="sm" style={{ fontSize: '14px', color: '#667eea' }}>
+          Система дифференциальных уравнений
+        </Title>
+        <Text c="gray.3" size="sm" mb="md">
+          Интегрирование выполняется по аргументу широты u. Возмущающие ускорения S, T, W вычисляются от лунного гравитационного воздействия:
+        </Text>
+        <Box
+          style={{
+            background: 'rgba(102, 126, 234, 0.1)',
+            border: '1px solid rgba(102, 126, 234, 0.3)',
+            borderRadius: '12px',
+            padding: '16px',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            marginBottom: '20px',
+            overflowX: 'auto',
+          }}
+        >
+          <div>dΩ/du = (r³ sin u) / (μ p sin i) · W</div>
+          <div>di/du = (r³ cos u) / (μ p) · W</div>
+          <div>dp/du = (2r³)/μ · T</div>
+          <div>de/du = (r²)/(μ e) · [sin ν S + cos ν (1 + r/p) T + e (r/p) W]</div>
+          <div>dω/du = (r²)/(μ e) · [cos ν S + e sin ν (1 + r/p) T - e (r/p) cot i sin u W]</div>
+        </Box>
+
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           <Box
             style={{
@@ -544,35 +590,33 @@ export default function LunarHelpTab() {
               padding: '20px',
             }}
           >
-            <Title order={5} mb="md" style={{ fontSize: '16px', color: '#667eea' }}>
-              📊 Метод RK4
+            <Title order={6} mb="md" style={{ fontSize: '14px', color: '#667eea' }}>
+              ⚙️ Параметры интегрирования
             </Title>
             <List spacing="sm" size="sm" c="gray.3">
-              <List.Item>Классический метод 4-го порядка точности</List.Item>
-              <List.Item>Точность: O(h⁴)</List.Item>
-              <List.Item>4 вычисления производных на шаг</List.Item>
-              <List.Item>Фиксированный шаг интегрирования</List.Item>
-              <List.Item>Оптимальный шаг: 10...100 с</List.Item>
+              <List.Item>Относительная погрешность: 10⁻¹⁴</List.Item>
+              <List.Item>Мин. шаг: h_min = Δu / 50000</List.Item>
+              <List.Item>Макс. шаг: h_max = Δu / 100</List.Item>
+              <List.Item>Коэффициент запаса: 0.9</List.Item>
             </List>
           </Box>
-          
+
           <Box
             style={{
-              background: 'rgba(240, 147, 251, 0.1)',
-              border: '1px solid rgba(240, 147, 251, 0.3)',
+              background: 'rgba(72, 187, 120, 0.1)',
+              border: '1px solid rgba(72, 187, 120, 0.3)',
               borderRadius: '12px',
               padding: '20px',
             }}
           >
-            <Title order={5} mb="md" style={{ fontSize: '16px', color: '#f093fb' }}>
-              🚀 Метод RKF45
+            <Title order={6} mb="md" style={{ fontSize: '14px', color: '#48bb78' }}>
+              ✅ Преимущества RKF45
             </Title>
             <List spacing="sm" size="sm" c="gray.3">
-              <List.Item>Адаптивный метод с автоматическим шагом</List.Item>
-              <List.Item>Два решения: 4-го и 5-го порядков</List.Item>
-              <List.Item>Контроль локальной ошибки</List.Item>
-              <List.Item>Эффективнее для переменной динамики</List.Item>
-              <List.Item>Точность: 10⁻⁶ ... 10⁻¹⁰</List.Item>
+              <List.Item>Автоматический выбор шага</List.Item>
+              <List.Item>Высокая точность (10⁻¹⁰...10⁻¹⁴)</List.Item>
+              <List.Item>Эффективен для переменной динамики</List.Item>
+              <List.Item>Надёжный контроль погрешности</List.Item>
             </List>
           </Box>
         </SimpleGrid>
