@@ -12,6 +12,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+    shm_size: '2gb'  # Критично для Puppeteer!
     restart: unless-stopped
     networks:
       - lab-network
