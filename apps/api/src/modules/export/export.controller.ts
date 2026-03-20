@@ -185,6 +185,12 @@ export class ExportController {
       const result: CalculationResult = this.calc.calculate(body);
       const html = this.generateHtml(body, result);
 
+      console.log('[PDF Export] Starting Puppeteer launch...');
+      console.log(
+        '[PDF Export] Executable path:',
+        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+      );
+
       // Запускаем браузер (в Docker используем системный Chromium, путь передаём через переменную окружения)
       browser = await puppeteer.launch({
         headless: true,
@@ -199,15 +205,22 @@ export class ExportController {
           '--disable-features=IsolateOrigins,site-per-process',
           '--window-size=1920,1080',
         ],
+        dumpio: true, // Вывод stdout/stderr браузера в консоль
       });
 
+      console.log('[PDF Export] Browser launched successfully!');
+
       const page = await browser.newPage();
+
+      console.log('[PDF Export] Setting HTML content...');
 
       // Устанавливаем таймаут и генерируем PDF из HTML
       await page.setContent(html, {
         waitUntil: 'load',
         timeout: 30000,
       });
+
+      console.log('[PDF Export] Content loaded, generating PDF...');
 
       // ✅ Генерируем PDF (возвращает Uint8Array)
       const pdfBuffer = await page.pdf({
@@ -222,6 +235,12 @@ export class ExportController {
         displayHeaderFooter: false,
       });
 
+      console.log(
+        '[PDF Export] PDF generated successfully! Size:',
+        pdfBuffer.length,
+        'bytes',
+      );
+
       // ✅ Конвертируем Uint8Array в Buffer
       const buffer = Buffer.from(pdfBuffer);
 
@@ -234,7 +253,14 @@ export class ExportController {
 
       res.send(buffer);
     } catch (error) {
-      console.error('PDF Generation Error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : 'No stack';
+
+      console.error('[PDF Export] CRITICAL ERROR:', {
+        message: errorMessage,
+        stack: errorStack,
+      });
       throw new HttpException(
         'Failed to generate PDF: ' +
           (error instanceof Error ? error.message : 'Unknown error'),
@@ -243,7 +269,11 @@ export class ExportController {
     } finally {
       // Закрываем браузер
       if (browser) {
-        await browser.close().catch(() => {});
+        console.log('[PDF Export] Closing browser...');
+        await browser.close().catch((err) => {
+          const errMsg = err instanceof Error ? err.message : 'Unknown error';
+          console.error('[PDF Export] Error closing browser:', errMsg);
+        });
       }
     }
   }
