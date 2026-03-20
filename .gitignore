@@ -1,4 +1,4 @@
 node_modules
 apps/**/dist
 *.node_modules
-*.md
+.lingma
