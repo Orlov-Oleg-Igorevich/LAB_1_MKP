@@ -575,33 +575,51 @@ export class ExportController {
 
       console.log('[Lunar PDF Export] ✓ Browser stable, creating page...');
 
-      const page = await browser.newPage();
-      await page.setContent(html, {
-        waitUntil: 'load',
-        timeout: 30000,
-      });
+      try {
+        const page = await browser.newPage();
+        console.log('[Lunar PDF Export] ✓ Page created! Setting content...');
 
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '60px',
-          bottom: '60px',
-          left: '40px',
-          right: '40px',
-        },
-        displayHeaderFooter: false,
-      });
+        await page.setContent(html, {
+          waitUntil: 'load',
+          timeout: 30000,
+        });
 
-      const buffer = Buffer.from(pdfBuffer);
+        console.log('[Lunar PDF Export] ✓ Content loaded! Generating PDF...');
 
-      res.setHeader(
-        'Content-Disposition',
-        'attachment; filename="lunar_perturbation_report.pdf"',
-      );
-      res.setHeader('Content-Length', buffer.length);
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '60px',
+            bottom: '60px',
+            left: '40px',
+            right: '40px',
+          },
+          displayHeaderFooter: false,
+        });
 
-      res.send(buffer);
+        console.log(
+          '[Lunar PDF Export] ✓ PDF generated! Size:',
+          pdfBuffer.length,
+          'bytes',
+        );
+
+        const buffer = Buffer.from(pdfBuffer);
+
+        res.setHeader(
+          'Content-Disposition',
+          'attachment; filename="lunar_perturbation_report.pdf"',
+        );
+        res.setHeader('Content-Length', buffer.length);
+
+        res.send(buffer);
+      } catch (pageError) {
+        console.error('[Lunar PDF Export] Page/PDF generation error:', {
+          message: pageError instanceof Error ? pageError.message : 'Unknown',
+          stack: pageError instanceof Error ? pageError.stack : 'No stack',
+        });
+        throw pageError;
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
