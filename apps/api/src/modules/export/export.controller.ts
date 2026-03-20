@@ -516,19 +516,40 @@ export class ExportController {
       const result: LunarResult = this.lunar.calculate(body);
       const html = this.generateLunarHtml(body, result);
 
+      console.log('[Lunar PDF Export] Starting Puppeteer launch...');
+      console.log(
+        '[Lunar PDF Export] Executable path:',
+        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+      );
+
+      // Проверяем существование файла Chromium
+      const chromePath =
+        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+      if (fs.existsSync(chromePath)) {
+        console.log(
+          '[Lunar PDF Export] Chromium executable exists:',
+          chromePath,
+        );
+      } else {
+        console.error(
+          '[Lunar PDF Export] CRITICAL: Chromium NOT FOUND at:',
+          chromePath,
+        );
+      }
+
       browser = await puppeteer.launch({
         headless: true,
-        executablePath:
-          process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        executablePath: chromePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process',
-          '--window-size=1920,1080',
+          '--single-process',
+          '--no-zygote',
         ],
+        dumpio: true,
+        timeout: 180000,
       });
 
       const page = await browser.newPage();
@@ -559,7 +580,14 @@ export class ExportController {
 
       res.send(buffer);
     } catch (error) {
-      console.error('Lunar PDF Generation Error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : 'No stack';
+
+      console.error('[Lunar PDF Export] CRITICAL ERROR:', {
+        message: errorMessage,
+        stack: errorStack,
+      });
       throw new HttpException(
         'Failed to generate lunar PDF: ' +
           (error instanceof Error ? error.message : 'Unknown error'),
@@ -567,7 +595,11 @@ export class ExportController {
       );
     } finally {
       if (browser) {
-        await browser.close().catch(() => {});
+        console.log('[Lunar PDF Export] Closing browser...');
+        await browser.close().catch((err) => {
+          const errMsg = err instanceof Error ? err.message : 'Unknown error';
+          console.error('[Lunar PDF Export] Error closing browser:', errMsg);
+        });
       }
     }
   }
